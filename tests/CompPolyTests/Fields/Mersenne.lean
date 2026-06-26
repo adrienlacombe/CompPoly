@@ -21,5 +21,13 @@ example : NonBinaryField Mersenne31.Field := inferInstance
 example : (2 : Mersenne31.Field) ≠ 0 := by
   exact NonBinaryField.char_neq_2
 
-example : Mersenne31.fieldSize - 1 = 2 * (2 ^ (Mersenne31.pBits - 1) - 1) :=
-  Mersenne31.fieldSize_sub_one
+example : Mersenne31.twoAdicity = 1 := rfl
+
+example :
+    Mersenne31.fieldSize - 1 =
+      2 ^ Mersenne31.twoAdicity * (2 ^ (Mersenne31.pBits - 1) - 1) :=
+  Mersenne31.fieldSize_sub_one_factorization
+
+example : 0 < Mersenne31.fieldSize := Mersenne31.fieldSize_pos
+
+example : Mersenne31.fieldSize ≠ 0 := Mersenne31.fieldSize_ne_zero
