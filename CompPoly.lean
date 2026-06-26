@@ -104,6 +104,7 @@ import CompPoly.Fields.KoalaBear.Basic
 import CompPoly.Fields.KoalaBear.Fast
 import CompPoly.Fields.Mersenne31
 import CompPoly.Fields.Mersenne31.Basic
+import CompPoly.Fields.Mersenne31.Circle
 import CompPoly.Fields.Mersenne31.Fast
 import CompPoly.Fields.PrattCertificate
 import CompPoly.Fields.Secp256k1
