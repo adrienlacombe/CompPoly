@@ -3,11 +3,14 @@ Copyright (c) 2026 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
-import CompPoly.Univariate.DivisionCorrectness
-import CompPoly.Univariate.NTT.FastMul
-import CompPoly.Univariate.NTT.FastMulLow
-import CompPoly.Univariate.NTTFast.Correctness.Pipeline
-import CompPoly.Univariate.NTTFast.FastMulLow
+module
+
+import all CompPoly.Univariate.Basic
+public import CompPoly.Univariate.DivisionCorrectness
+public import CompPoly.Univariate.NTT.FastMul
+public import CompPoly.Univariate.NTT.FastMulLow
+public import CompPoly.Univariate.NTTFast.Correctness.Pipeline
+public import CompPoly.Univariate.NTTFast.FastMulLow
 
 /-!
 # Raw Univariate Algorithm Contexts
@@ -15,6 +18,8 @@ import CompPoly.Univariate.NTTFast.FastMulLow
 Array-level execution dictionaries for reusable raw univariate polynomial
 kernels.
 -/
+
+public section
 
 namespace CompPoly
 
@@ -105,10 +110,12 @@ def reversal [Field R] [BEq R] [LawfulBEq R]
     (M : Raw.MulLowContext R) : ModContext R where
   modByMonic p q := CPolynomial.Raw.modByMonicByReversal M p q
   modByMonic_eq_modByMonic p q hp hq := by
-    have h := congrArg Subtype.val
-      (CPolynomial.modByMonicByReversal_eq_modByMonic M
-        (CPolynomial.ofArray p) (CPolynomial.ofArray q))
-    simpa [CPolynomial.ofArray, hp, hq] using h
+    let cp : CPolynomial R := ⟨p, Trim.isCanonical_of_trim_eq hp⟩
+    let cq : CPolynomial R := ⟨q, Trim.isCanonical_of_trim_eq hq⟩
+    change (CPolynomial.modByMonicByReversal M cp cq).val =
+      (CPolynomial.modByMonic cp cq).val
+    exact congrArg Subtype.val
+      (CPolynomial.modByMonicByReversal_eq_modByMonic M cp cq)
 
 /-- Raw monic remainders by reversal, using an NTT low-product backend. -/
 def reversalNtt [Field R] [BEq R] [LawfulBEq R]

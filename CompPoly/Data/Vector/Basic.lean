@@ -3,18 +3,22 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Chung Thai Nguyen
 -/
-import Batteries.Data.Vector.Lemmas
-import CompPoly.Data.List.Lemmas
-import Mathlib.Algebra.BigOperators.Fin
-import Mathlib.Algebra.Order.Star.Basic
-import Mathlib.Algebra.Order.Sub.Basic
-import Mathlib.Data.List.Fold
-import Mathlib.Data.Matrix.Mul
-import Mathlib.Tactic.Ring
+module
+
+public import Batteries.Data.Vector.Lemmas
+public import CompPoly.Data.List.Lemmas
+public import Mathlib.Algebra.BigOperators.Fin
+public import Mathlib.Algebra.Order.Star.Basic
+public import Mathlib.Algebra.Order.Sub.Basic
+public import Mathlib.Data.List.Fold
+public import Mathlib.Data.Matrix.Mul
+public import Mathlib.Tactic.Ring
 
 /-!
 # Definitions and lemmas for `Vector`
 -/
+
+@[expose] public section
 universe u
 
 namespace Vector
@@ -57,22 +61,17 @@ lemma cons_get_eq {α} {n : ℕ} (hd : α) (tl : Vector α n) (i : Fin (n + 1)) 
           contradiction
         · have hi_lt:= i.isLt; omega
       ⟩) := by
-  if h_i_val: i.val = 0 then
-    have h_i: i = 0 := by exact Eq.symm (Fin.eq_of_val_eq (id (Eq.symm h_i_val)))
-    subst h_i
-    simp only [h_i_val, beq_iff_eq, ↓reduceDIte]
-    simp only [cons, get, insertIdx] -- unfold everything
-    simp_all only [Fin.coe_ofNat_eq_mod, Nat.zero_mod, Array.insertIdx_zero, Fin.val_cast,
-                  List.size_toArray, List.length_cons, List.length_nil, _root_.zero_add,
-                  zero_lt_one, Array.getElem_append_left, List.getElem_toArray,
-                  List.getElem_cons_zero]
-  else
-    simp only [h_i_val, beq_iff_eq, ↓reduceDIte]
-    simp only [cons, get, insertIdx] -- unfold everything
-    simp only [Array.insertIdx_zero, Fin.val_cast, Fin.cast_mk, getElem_toArray]
-    apply Array.getElem_append_right -- key counterpart for cons_get_eq in `Array` realm
-    simp only [List.size_toArray, List.length_cons, List.length_nil]
-    omega
+  simp only [cons, get_eq_getElem, Vector.insertIdx_zero, Vector.getElem_cast]
+  split
+  · -- head position: read from the singleton prefix
+    next h =>
+      have h0 : i.val = 0 := by simpa using h
+      rw [Vector.getElem_append_left (by omega)]
+      simp [h0]
+  · -- tail position: read from `tl`, shifted past the singleton prefix
+    next h =>
+      have h0 : i.val ≠ 0 := by simpa using h
+      rw [Vector.getElem_append_right (by omega) (by omega)]
 
 @[simp]
 lemma cons_empty_tail_eq_nil {α} (hd : α) (tl : Vector α 0) :

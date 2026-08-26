@@ -3,11 +3,12 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.FactorMonic
-import CompPoly.Bivariate.GuruswamiSudan.Interpolation.Basic
-import CompPoly.Bivariate.GuruswamiSudan.PolynomialCorrectness
-import Mathlib.Algebra.Polynomial.Taylor
+public import CompPoly.Bivariate.FactorMonic
+public import CompPoly.Bivariate.GuruswamiSudan.Interpolation.Basic
+public import CompPoly.Bivariate.GuruswamiSudan.PolynomialCorrectness
+public import Mathlib.Algebra.Polynomial.Taylor
 
 /-!
 # Shared Guruswami-Sudan Interpolation Correctness
@@ -15,13 +16,15 @@ import Mathlib.Algebra.Polynomial.Taylor
 Backend-neutral correctness facts for executable interpolation helpers.
 -/
 
+@[expose] public section
+
 namespace CompPoly
 
 namespace GuruswamiSudan
 
 /-- The executable witness recognizer is equivalent to the semantic witness contract. -/
 theorem interpolationWitnessIsValidBool_iff {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (F × F)} {params : GSInterpParams} {Q : CBivariate F} :
     interpolationWitnessIsValidBool points params Q = true ↔
       ValidInterpolationWitness points params Q := by
@@ -35,7 +38,7 @@ private noncomputable def lowMessageYPolynomial {F : Type*} [Field F]
     (fun P point ↦ P * ((Polynomial.X - Polynomial.C point.2) ^ multiplicity)) 1
 
 private theorem cbivariate_toPoly_pow {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (Q : CBivariate F) (n : Nat) :
     CBivariate.toPoly (Q ^ n) = CBivariate.toPoly Q ^ n := by
   induction n with
@@ -54,15 +57,15 @@ private theorem list_foldl_mul_eq_mul_prod {α R : Type*} [CommMonoid R]
       simp [mul_assoc]
 
 private theorem linearYDivisor_C_toPoly {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F] (y : F) :
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F] (y : F) :
     CBivariate.toPoly (CBivariate.linearYDivisor (CPolynomial.C y)) =
       (Polynomial.X - Polynomial.C y).map (Polynomial.C : F →+* Polynomial F) := by
   rw [CBivariate.toPoly_eq_map]
   rw [CBivariate.linearYDivisor_toPoly]
-  simp [CPolynomial.C_toPoly, CPolynomial.ringEquiv]
+  simp [CPolynomial.C_toPoly, CPolynomial.ringEquiv_apply]
 
 private theorem lowMessageYPolynomial_toPoly {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (points : Array (F × F)) (multiplicity : Nat) :
     CBivariate.toPoly (lowMessageDegreeInterpolation points multiplicity) =
       (lowMessageYPolynomial points multiplicity).map
@@ -171,7 +174,7 @@ private theorem eval_hasseDeriv_eq_zero_of_X_sub_C_pow_dvd {F : Type*} [Field F]
   simp
 
 private theorem cbivariate_coeff_of_toPoly_map_C {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {Q : CBivariate F} {P : Polynomial F}
     (hQ : CBivariate.toPoly Q = P.map (Polynomial.C : F →+* Polynomial F))
     (i j : Nat) :
@@ -187,7 +190,7 @@ private theorem cbivariate_coeff_of_toPoly_map_C {F : Type*}
   · simpa [hi, Polynomial.coeff_map, Polynomial.coeff_C] using hcoeff
 
 private theorem hasseDerivative_pos_xOrder_eq_zero_of_toPoly_map_C {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {Q : CBivariate F} {P : Polynomial F}
     (hQ : CBivariate.toPoly Q = P.map (Polynomial.C : F →+* Polynomial F))
     {a : Nat} (ha : 0 < a) (b : Nat) :
@@ -201,7 +204,7 @@ private theorem hasseDerivative_pos_xOrder_eq_zero_of_toPoly_map_C {F : Type*}
   simp
 
 private theorem hasseDerivativeEval_pos_xOrder_of_toPoly_map_C {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {Q : CBivariate F} {P : Polynomial F}
     (hQ : CBivariate.toPoly Q = P.map (Polynomial.C : F →+* Polynomial F))
     {a : Nat} (ha : 0 < a) (b : Nat) (x y : F) :
@@ -211,7 +214,7 @@ private theorem hasseDerivativeEval_pos_xOrder_of_toPoly_map_C {F : Type*}
   rw [CBivariate.evalEval_zero]
 
 private theorem hasseDerivative_zero_xOrder_toPoly_of_map_C {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {Q : CBivariate F} {P : Polynomial F}
     (hQ : CBivariate.toPoly Q = P.map (Polynomial.C : F →+* Polynomial F))
     (b : Nat) :
@@ -230,7 +233,7 @@ private theorem hasseDerivative_zero_xOrder_toPoly_of_map_C {F : Type*}
   · simp [hi]
 
 private theorem hasseDerivativeEval_zero_xOrder_of_toPoly_map_C {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {Q : CBivariate F} {P : Polynomial F}
     (hQ : CBivariate.toPoly Q = P.map (Polynomial.C : F →+* Polynomial F))
     (b : Nat) (x y : F) :
@@ -242,7 +245,7 @@ private theorem hasseDerivativeEval_zero_xOrder_of_toPoly_map_C {F : Type*}
   simp [Polynomial.evalEval]
 
 private theorem lowMessageDegreeInterpolation_ne_zero {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (points : Array (F × F)) (multiplicity : Nat) :
     lowMessageDegreeInterpolation points multiplicity ≠ 0 := by
   intro hzero
@@ -255,7 +258,7 @@ private theorem lowMessageDegreeInterpolation_ne_zero {F : Type*}
     (lowMessageYPolynomial_ne_zero points multiplicity)) hmap
 
 private theorem lowMessageDegreeInterpolation_weightedDegree_zero {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (points : Array (F × F)) (multiplicity : Nat) :
     CBivariate.natWeightedDegree (lowMessageDegreeInterpolation points multiplicity) 1 0 ≤ 0 := by
   apply CBivariate.natWeightedDegree_le_of_coeff_zero
@@ -266,7 +269,7 @@ private theorem lowMessageDegreeInterpolation_weightedDegree_zero {F : Type*}
   simp [hi]
 
 private theorem lowMessageDegreeInterpolation_satisfies {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (points : Array (F × F)) (multiplicity : Nat) :
     CBivariate.SatisfiesMultiplicityConstraints
       (lowMessageDegreeInterpolation points multiplicity) points multiplicity := by
@@ -284,7 +287,7 @@ private theorem lowMessageDegreeInterpolation_satisfies {F : Type*}
 
 /-- Constructive low-message interpolation returns a semantic GS interpolation witness. -/
 theorem lowMessageDegreeInterpolation_sound {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (Prod F F)} {params : GSInterpParams}
     (hLow : params.messageDegree ≤ 1) :
     let Q := lowMessageDegreeInterpolation points params.multiplicity

@@ -3,7 +3,9 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Chung Thai Nguyen
 -/
-import CompPoly.Multilinear.Basic
+module
+
+public import CompPoly.Multilinear.Basic
 
 /-!
   # Equivalence between `CMlPolynomial` and multilinear polynomials in `MvPolynomial`
@@ -14,15 +16,19 @@ import CompPoly.Multilinear.Basic
   3. Equivalences with mathlib's `MvPolynomial.restrictDegree`: `equivMvPolynomialDeg1`
   4. Arithmetic operation compatibilities
 -/
+
+@[expose] public section
 open MvPolynomial
 
-variable {R : Type*} [CommSemiring R] {n : ℕ}
+variable {R : Type*} {n : ℕ}
 
 noncomputable section
 
 namespace CompPoly
 
 namespace CMlPolynomial
+
+variable [CommSemiring R]
 
 /-! ### Equivalence with Mathlib MvPolynomial
 - Note: maybe we have to add more restrictions on `CMlPolynomial R n` and `CMlPolynomialEval R n`
@@ -301,9 +307,7 @@ noncomputable def linearEquivMvPolynomialDeg1 :
       -- coeff i ↑(p.toMvPolynomialDeg1 + q.toMvPolynomialDeg1)
       unfold equivMvPolynomialDeg1 toMvPolynomialDeg1
       simp only [AddMemClass.mk_add_mk, coeff_add]
-      erw [coeff_of_toMvPolynomial_eq_coeff_of_CMlPolynomial (p := p + q)]
-      simp only [coeff_of_toMvPolynomial_eq_coeff_of_CMlPolynomial (p := p)]
-      simp only [coeff_of_toMvPolynomial_eq_coeff_of_CMlPolynomial (p := q)]
+      simp only [coeff_of_toMvPolynomial_eq_coeff_of_CMlPolynomial]
       if h_binary: (∀ j: Fin n, i j ≤ 1) then
         simp only [h_binary, implies_true, ↓reduceDIte]
         erw [Vector.getElem_zipWith]
@@ -314,11 +318,10 @@ noncomputable def linearEquivMvPolynomialDeg1 :
       ext i
       unfold equivMvPolynomialDeg1 toMvPolynomialDeg1
       simp only [RingHom.id_apply, SetLike.mk_smul_mk, coeff_smul, smul_eq_mul]
-      erw [coeff_of_toMvPolynomial_eq_coeff_of_CMlPolynomial (p := r • p)]
-      simp only [coeff_of_toMvPolynomial_eq_coeff_of_CMlPolynomial (p := p)]
+      simp only [coeff_of_toMvPolynomial_eq_coeff_of_CMlPolynomial]
       if h_binary: (∀ j: Fin n, i j ≤ 1) then
         simp only [h_binary, implies_true, ↓reduceDIte]
-        erw [Vector.getElem_map]; rfl
+        erw [Vector.getElem_map]
       else
         simp only [h_binary, ↓reduceDIte, mul_zero]
     }
@@ -327,23 +330,25 @@ end CMlPolynomial
 
 namespace CMlPolynomialEval
 
+variable [CommRing R]
+
 /-- Converts a hypercube-evaluation representation to a Mathlib multivariate polynomial by first
 recovering the monomial-basis representation. -/
-def toMvPolynomial [AddCommGroup R] (p : CMlPolynomialEval R n) : MvPolynomial (Fin n) R :=
+def toMvPolynomial (p : CMlPolynomialEval R n) : MvPolynomial (Fin n) R :=
   CMlPolynomial.toMvPolynomial (CMlPolynomial.lagrangeToMono n p)
 
 /-- Converts a hypercube-evaluation representation to a Mathlib restricted-degree multivariate
 polynomial. -/
-def toMvPolynomialDeg1 [AddCommGroup R] (p : CMlPolynomialEval R n) :
+def toMvPolynomialDeg1 (p : CMlPolynomialEval R n) :
     MvPolynomial.restrictDegree (Fin n) R 1 :=
   CMlPolynomial.toMvPolynomialDeg1 (CMlPolynomial.lagrangeToMono n p)
 
 /-- The multilinear equality polynomial centered at `w`. -/
-def eqPolynomial [CommRing R] (w : Vector R n) : MvPolynomial (Fin n) R :=
+def eqPolynomial (w : Vector R n) : MvPolynomial (Fin n) R :=
   toMvPolynomial (lagrangeBasis w)
 
 /-- The restricted-degree multilinear equality polynomial centered at `w`. -/
-def eqPolynomialDeg1 [CommRing R] (w : Vector R n) :
+def eqPolynomialDeg1 (w : Vector R n) :
     MvPolynomial.restrictDegree (Fin n) R 1 :=
   toMvPolynomialDeg1 (lagrangeBasis w)
 

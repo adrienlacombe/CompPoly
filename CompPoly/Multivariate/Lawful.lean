@@ -3,8 +3,10 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Frantisek Silvasi
 -/
-import CompPoly.Multivariate.Unlawful
-import Mathlib.Analysis.Normed.Ring.Lemmas
+module
+
+public import CompPoly.Multivariate.Unlawful
+public import Mathlib.Analysis.Normed.Ring.Lemmas
 
 /-!
 # 'Lawful' finite supports
@@ -18,6 +20,8 @@ computable multivariate polynomials.
 
 * `CPoly.Lawful n R`: The subtype of `Unlawful n R` with no zero coefficients.
 -/
+
+@[expose] public section
 set_option allowUnsafeReducibility true in
 attribute [local reducible] instDecidableEqOfLawfulBEq
 attribute [local instance 5] instDecidableEqOfLawfulBEq
@@ -27,6 +31,7 @@ namespace CPoly
 open Std
 
 /-- The subtype of polynomials with no zero coefficients. -/
+@[implicit_reducible]
 def Lawful (n : ℕ) (R : Type*) [Zero R] : Type _ :=
   {p : Unlawful n R // p.isNoZeroCoef}
 
@@ -157,7 +162,7 @@ protected lemma grind_add_skip_aggressive [Add R] {p₁ p₂ : Lawful n R} :
 def mul [Mul R] [Add R] (p₁ p₂ : Lawful n R) : Lawful n R :=
   fromUnlawful <| p₁.val * p₂.val
 
-instance [Mul R] [Add R] [Zero R] : Mul (Lawful n R) := ⟨mul⟩
+instance [Mul R] [Add R] : Mul (Lawful n R) := ⟨mul⟩
 
 /-- Polynomial exponentiation via repeated multiplication. `O(k)` multiplications.
 
@@ -215,8 +220,6 @@ lemma fromUnlawful_cast {p : Lawful n R} : fromUnlawful p.1 = p := by
   grind
 
 section
-
-variable [BEq R] [LawfulBEq R]
 
 /-- Negation of a polynomial. -/
 def neg [Neg R] (p : Lawful n R) : Lawful n R :=

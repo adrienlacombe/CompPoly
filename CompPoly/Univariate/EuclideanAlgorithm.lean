@@ -3,9 +3,12 @@ Copyright (c) 2026 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Juan Conejero, Valerii Huhnin
 -/
-import CompPoly.Univariate.Basic
-import CompPoly.Univariate.DivisionCorrectness
-import CompPoly.ToMathlib.Order.WithBot
+module
+
+import all CompPoly.Univariate.DivisionCorrectness
+public import CompPoly.Univariate.Basic
+public import CompPoly.Univariate.DivisionCorrectness
+public import CompPoly.ToMathlib.Order.WithBot
 
 /-!
 # Extended Euclidean Algorithm for `CPolynomial`
@@ -18,6 +21,8 @@ For positive thresholds, `xgcd_stopSpec` characterizes the output: `BezoutStopSp
 the Bézout identity together with the residue/cofactor degree bounds at the stopping point,
 via the loop invariant `BezoutDegreeInvariant`.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -128,7 +133,8 @@ coincides with Mathlib's `EuclideanDomain.gcd`. -/
 theorem xgcd_toPoly_eq_gcd [Field R] [BEq R] [LawfulBEq R] [DecidableEq R] (p q : CPolynomial R) :
     (xgcd p q).1.toPoly = EuclideanDomain.gcd p.toPoly q.toPoly := by
   unfold xgcd; apply xgcdAux_toPoly_eq_gcd
-  rw [←degree_toPoly]; exact mem_degreeLT_iff_size_le.mpr le_rfl
+  rw [←degree_toPoly]
+  exact mem_degreeLT.mp (mem_degreeLT_iff_size_le.mpr le_rfl)
 
 /-- CompPoly's `xgcdAux` at threshold `0` coincides with
 Mathlib's `EuclideanDomain.xgcdAux`. -/
@@ -165,7 +171,9 @@ theorem xgcd_toPoly_eq_xgcd
       EuclideanDomain.xgcd p.toPoly q.toPoly := by
   unfold xgcd EuclideanDomain.xgcd
   have h := xgcdAux_toPoly_eq_xgcdAux p.val.size p 1 0 q 0 1
-    (by rw [←degree_toPoly]; exact mem_degreeLT_iff_size_le.mpr le_rfl)
+    (by
+      rw [←degree_toPoly]
+      exact mem_degreeLT.mp (mem_degreeLT_iff_size_le.mpr le_rfl))
   rw [toPoly_one, toPoly_zero] at h
   exact congrArg Prod.snd h
 
@@ -189,12 +197,7 @@ theorem normXgcd_bezout [Field R] [BEq R] [LawfulBEq R]
   simp only [Bezout] at h ⊢
   rw [h]
   apply toPolyLinearEquiv.injective
-  change (((p.xgcd q threshold).2.1 * p + (p.xgcd q threshold).2.2 * q).leadingCoeff⁻¹ •
-      ((p.xgcd q threshold).2.1 * p + (p.xgcd q threshold).2.2 * q)).toPoly =
-    (((p.xgcd q threshold).2.1 * p + (p.xgcd q threshold).2.2 * q).leadingCoeff⁻¹ •
-        (p.xgcd q threshold).2.1 * p +
-      ((p.xgcd q threshold).2.1 * p + (p.xgcd q threshold).2.2 * q).leadingCoeff⁻¹ •
-        (p.xgcd q threshold).2.2 * q).toPoly
+  rw [toPolyLinearEquiv_apply, toPolyLinearEquiv_apply]
   simp only [toPoly_smul, toPoly_add, toPoly_mul, Polynomial.smul_eq_C_mul]
   ring
 
@@ -231,7 +234,7 @@ theorem monicNormalize_toPoly_eq_normalize
     rw [CPolynomial.Raw.toPoly_zero, CPolynomial.toPoly_zero, normalize_zero]
   · have hp : p ≠ 0 := by
       intro hp
-      exact hpraw (by subst p; rfl)
+      exact hpraw (by subst p; exact beq_self_eq_true _)
     rw [if_neg hpraw, Raw.toPoly_smul]
     have hlead : CPolynomial.Raw.leadingCoeff p.val = p.leadingCoeff := by
       simp [CPolynomial.Raw.leadingCoeff, CPolynomial.leadingCoeff, CPolynomial.trim_eq]
@@ -316,12 +319,13 @@ theorem gcdMonic_toPoly_eq_normalize_gcd
     (p q : CPolynomial R) :
     (CPolynomial.gcdMonic p q).toPoly =
       normalize (EuclideanDomain.gcd p.toPoly q.toPoly) := by
-  simpa [CPolynomial.gcdMonic, CPolynomial.Raw.gcdMonic] using
-    gcdMonicWithFuel_toPoly_eq_normalize_gcd
+  change (CPolynomial.gcdMonicWithFuel (p.val.size + q.val.size + 1) p q).toPoly =
+      normalize (EuclideanDomain.gcd p.toPoly q.toPoly)
+  exact gcdMonicWithFuel_toPoly_eq_normalize_gcd
       (p.val.size + q.val.size + 1) p q (by
         have hqdeg : q.toPoly.degree < q.val.size := by
           rw [← degree_toPoly]
-          exact mem_degreeLT_iff_size_le.mpr le_rfl
+          exact mem_degreeLT.mp (mem_degreeLT_iff_size_le.mpr le_rfl)
         have hleNat : q.val.size ≤ p.val.size + q.val.size + 1 := by
           omega
         have hle : (q.val.size : WithBot ℕ) ≤
@@ -336,7 +340,7 @@ theorem gcdMonic_eq_normXgcd_fst
     (p q : CPolynomial R) :
     CPolynomial.gcdMonic p q = (CPolynomial.normXgcd p q).1 := by
   apply toPolyLinearEquiv.injective
-  change (CPolynomial.gcdMonic p q).toPoly = (CPolynomial.normXgcd p q).1.toPoly
+  rw [toPolyLinearEquiv_apply, toPolyLinearEquiv_apply]
   rw [gcdMonic_toPoly_eq_normalize_gcd, normXgcd_fst_toPoly]
 
 /-- The Bezout component of `normXgcd` under `toPoly` is Mathlib's
@@ -358,12 +362,17 @@ theorem normXgcd_fst_comm
     (p q : CPolynomial R) :
     (normXgcd p q).1 = (normXgcd q p).1 := by
   apply toPolyLinearEquiv.injective
-  show (normXgcd p q).1.toPoly = (normXgcd q p).1.toPoly
+  rw [toPolyLinearEquiv_apply, toPolyLinearEquiv_apply]
   rw [normXgcd_fst_toPoly, normXgcd_fst_toPoly]
-  open EuclideanDomain in
-  refine normalize_eq_normalize_iff_associated.mpr
-    (associated_of_dvd_dvd ?_ ?_) <;>
-  exact dvd_gcd (gcd_dvd_right ..) (gcd_dvd_left ..)
+  -- `normalize (gcd a b) = normalize (gcd b a)` via mutual divisibility.
+  refine (normalize_eq_normalize_iff_associated).mpr ?_
+  refine associated_of_dvd_dvd ?_ ?_
+  · exact EuclideanDomain.dvd_gcd
+      (EuclideanDomain.gcd_dvd_right p.toPoly q.toPoly)
+      (EuclideanDomain.gcd_dvd_left p.toPoly q.toPoly)
+  · exact EuclideanDomain.dvd_gcd
+      (EuclideanDomain.gcd_dvd_right q.toPoly p.toPoly)
+      (EuclideanDomain.gcd_dvd_left q.toPoly p.toPoly)
 
 end CPolynomial
 
@@ -487,7 +496,8 @@ lemma xgcd_stopSpec
   have hge1 : 1 ≤ g₀.toPoly.natDegree := natDegree_toPoly g₀ ▸ hthr.trans (not_lt.mp hstop)
   have hM : g₀.toPoly.natDegree + 1 ≤ g₀.val.size :=
     (Polynomial.natDegree_lt_iff_degree_lt hg₀poly).mpr
-      (degree_toPoly g₀ ▸ mem_degreeLT_iff_size_le.mpr le_rfl)
+      (degree_toPoly g₀ ▸
+        mem_degreeLT.mp (mem_degreeLT_iff_size_le.mpr le_rfl))
   obtain ⟨N, hN⟩ : ∃ N, g₀.val.size = N + 1 := ⟨g₀.val.size - 1, by omega⟩
   obtain ⟨hr1, hs1, ht1⟩ : (g₁ - g₁/g₀*g₀).toPoly = g₁.toPoly ∧ (0 - g₁/g₀*1).toPoly = 0 ∧
       (1 - g₁/g₀*0).toPoly = 1 := by

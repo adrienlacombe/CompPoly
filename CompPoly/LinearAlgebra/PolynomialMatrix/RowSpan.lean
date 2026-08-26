@@ -3,13 +3,16 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.LinearAlgebra.PolynomialMatrix.Shifted
-import CompPoly.Univariate.ToPoly
+public import CompPoly.LinearAlgebra.PolynomialMatrix.Shifted
+public import CompPoly.Univariate.ToPoly
 
 /-!
 # Row Span for Polynomial Matrices
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -53,7 +56,7 @@ private theorem C_zero_mul [Semiring F] [BEq F] [LawfulBEq F]
     (CPolynomial.toPoly_mul (CPolynomial.C (0 : F)) p)
   rw [CPolynomial.C_toPoly] at hpoly
   rw [CPolynomial.coeff_toPoly, CPolynomial.coeff_toPoly]
-  simpa using hpoly
+  simpa [CPolynomial.toPoly_zero] using hpoly
 
 private theorem rowGet_zeroRow [Semiring F] [BEq F] [LawfulBEq F]
     (width j : Nat) :

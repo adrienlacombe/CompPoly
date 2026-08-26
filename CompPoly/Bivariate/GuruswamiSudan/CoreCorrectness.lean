@@ -3,11 +3,12 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.Filter
-import CompPoly.Bivariate.GuruswamiSudan.PolynomialCorrectness
-import CompPoly.Bivariate.GuruswamiSudan.Root.Common.Lemmas
-import CompPoly.ToMathlib.Polynomial.BivariateWeightedDegree
+public import CompPoly.Bivariate.GuruswamiSudan.Filter
+public import CompPoly.Bivariate.GuruswamiSudan.PolynomialCorrectness
+public import CompPoly.Bivariate.GuruswamiSudan.Root.Common.Lemmas
+public import CompPoly.ToMathlib.Polynomial.BivariateWeightedDegree
 
 /-!
 # Guruswami-Sudan Core Correctness
@@ -16,6 +17,8 @@ Public correctness theorems for the backend-parametric CompPoly
 Guruswami-Sudan core.
 -/
 
+@[expose] public section
+
 namespace CompPoly
 
 namespace GuruswamiSudan
@@ -23,7 +26,7 @@ namespace GuruswamiSudan
 /-- Every polynomial returned by `gsCore` is a bounded-degree root of the
 interpolation polynomial produced by the interpolation backend. -/
 theorem gsCore_sound {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (Prod F F)}
     {interpContext : GSInterpContext F} {rootContext : GSRootContext F}
     {params : GSInterpParams}
@@ -46,7 +49,7 @@ theorem gsCore_sound {F : Type*}
 /-- Completeness for the concrete interpolation polynomial returned by the
 interpolation backend. -/
 theorem gsCore_complete_of_interpolate {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (Prod F F)}
     {interpContext : GSInterpContext F} {rootContext : GSRootContext F}
     {params : GSInterpParams}
@@ -63,7 +66,7 @@ theorem gsCore_complete_of_interpolate {F : Type*}
 /-- Backend-parametric completeness for candidates that root every valid
 interpolation witness. -/
 theorem gsCore_complete_of_roots_all_valid_witnesses {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (Prod F F)}
     {interpContext : GSInterpContext F} {rootContext : GSRootContext F}
     {params : GSInterpParams}
@@ -82,7 +85,7 @@ theorem gsCore_complete_of_roots_all_valid_witnesses {F : Type*}
 
 /-- The executable `(0, 0)` Hasse derivative is ordinary full evaluation. -/
 private theorem hasseDerivativeEval_zero_zero {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (x y : F) (Q : CBivariate F) :
     CBivariate.hasseDerivativeEval 0 0 x y Q = CBivariate.evalEval x y Q := by
   rw [← CBivariate.hasseDerivative_eval_eq_eval]
@@ -95,7 +98,7 @@ private theorem hasseDerivativeEval_zero_zero {F : Type*}
 /-- Evaluating `Q(X, p(X))` at `x` agrees with full bivariate evaluation at
 `(x, p(x))`. -/
 private theorem eval_composeY_eq_evalEval {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (Q : CBivariate F) (p : CPolynomial F) (x : F) :
     CPolynomial.eval x (CBivariate.composeY Q p) =
       CBivariate.evalEval x (CPolynomial.eval x p) Q := by
@@ -111,7 +114,7 @@ private theorem eval_composeY_eq_evalEval {F : Type*}
 /-- A matched point satisfying a positive multiplicity constraint is a root of
 the composed univariate polynomial. -/
 private theorem eval_composeY_eq_zero_of_matched_point {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (F × F)} {params : GSInterpParams}
     {Q : CBivariate F} {p : CPolynomial F} {point : F × F}
     (hQ : ValidInterpolationWitness points params Q)
@@ -169,7 +172,7 @@ private theorem matchedX_nodup {F : Type*} [Semiring F] [BEq F]
 by its univariate degree. This is the simple-root part of the GS completeness
 argument. -/
 private theorem matchingPointCount_le_natDegree_composeY_of_ne_zero {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (F × F)} {params : GSInterpParams}
     {Q : CBivariate F} {p : CPolynomial F}
     (hQ : ValidInterpolationWitness points params Q)
@@ -229,7 +232,7 @@ private theorem toPoly_natDegree_le_pred_of_degreeLt {F : Type*}
 /-- The composed univariate polynomial has degree bounded by the interpolation
 witness weighted-degree bound. -/
 private theorem natDegree_composeY_toPoly_le_weightedDegreeBound {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (F × F)} {params : GSInterpParams}
     {Q : CBivariate F} {p : CPolynomial F}
     (hQ : ValidInterpolationWitness points params Q)
@@ -250,7 +253,7 @@ private theorem hasseDeriv_map_taylorAlgHom {F : Type*} [Field F]
   Polynomial.hasseDeriv b (P.map (Polynomial.taylorAlgHom x).toRingHom) =
       (Polynomial.hasseDeriv b P).map (Polynomial.taylorAlgHom x).toRingHom := by
   ext n
-  simp [Polynomial.hasseDeriv_coeff, Polynomial.taylorAlgHom, Polynomial.taylor_apply]
+  simp [Polynomial.hasseDeriv_coeff, Polynomial.taylorAlgHom]
 
 /-- Evaluating after Taylor-shifting all inner coefficients is the Taylor shift
 of the evaluated coefficient polynomial. -/
@@ -263,7 +266,7 @@ private theorem eval_map_taylorAlgHom {F : Type*} [Field F]
     (Polynomial.taylorAlgHom x).toRingHom
       (P.eval₂ (RingHom.id (Polynomial F)) (Polynomial.C y))
   rw [Polynomial.hom_eval₂]
-  simp [Polynomial.taylorAlgHom]
+  simp [Polynomial.taylor_C]
 
 /-- Hasse derivatives in `X` commute with multiplication by an `X`-constant
 polynomial. -/
@@ -333,7 +336,7 @@ private theorem coeff_coeffwise_hasseDeriv_sum {F : Type*} [Field F]
 /-- The executable bivariate Hasse derivative matches the Mathlib-side
 coefficientwise inner Hasse derivative of the outer Hasse derivative. -/
 private theorem toPoly_hasseDerivative_eq_coeffwise_hasseDeriv_hasseDeriv {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (Q : CBivariate F) (a b : Nat) :
     (CBivariate.hasseDerivative a b Q).toPoly =
       (Polynomial.hasseDeriv b Q.toPoly).sum fun j coeff ↦
@@ -350,7 +353,7 @@ private theorem toPoly_hasseDerivative_eq_coeffwise_hasseDeriv_hasseDeriv {F : T
 /-- Evaluating the univariate `X`-Hasse derivative of the evaluated `Y`-Hasse
 derivative matches the executable bivariate Hasse derivative. -/
 private theorem eval_hasseDeriv_eval_hasseDeriv_toPoly {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (Q : CBivariate F) (x y : F) (a b : Nat) :
     Polynomial.eval x (Polynomial.hasseDeriv a
         (Polynomial.eval (Polynomial.C y) (Polynomial.hasseDeriv b Q.toPoly))) =
@@ -364,7 +367,7 @@ private theorem eval_hasseDeriv_eval_hasseDeriv_toPoly {F : Type*}
 /-- The `(a, b)` coefficient of the two-variable Taylor shift of `Q` is the
 executable Hasse derivative of order `(a, b)` at the shift point. -/
 private theorem shifted_coeff_eq_hasseDerivativeEval {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (Q : CBivariate F) (x y : F) (a b : Nat) :
     ((Polynomial.taylor (Polynomial.C y)
       ((CBivariate.toPoly Q).map (Polynomial.taylorAlgHom x).toRingHom)).coeff b).coeff a =
@@ -378,7 +381,7 @@ private theorem shifted_coeff_eq_hasseDerivativeEval {F : Type*}
 /-- Taylor shifting `Q(X, p(X))` at `x` is the same as shifting `Q` in both
 variables and substituting the positive-order part of `p(X + x)`. -/
 private theorem taylor_composeY_toPoly_eq {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (Q : CBivariate F) (p : CPolynomial F) (x y : F)
     (_hmatch : CPolynomial.eval x p = y) :
     Polynomial.taylor x (CBivariate.composeY Q p).toPoly =
@@ -389,7 +392,7 @@ private theorem taylor_composeY_toPoly_eq {F : Type*}
   change (Polynomial.taylorAlgHom x).toRingHom
       (Polynomial.eval₂ (RingHom.id (Polynomial F)) p.toPoly Q.toPoly) = _
   rw [Polynomial.hom_eval₂]
-  simp [Polynomial.eval_map, Polynomial.taylorAlgHom, Polynomial.taylor_apply]
+  simp [Polynomial.eval_map, Polynomial.taylor_apply]
 
 /-- If `P(x) = y`, the nonconstant Taylor tail `P(X + x) - y` is divisible by
 `X`. -/
@@ -447,7 +450,7 @@ private theorem X_pow_dvd_eval_of_total_coeff_zero {F : Type*} [Field F]
 /-- Bivariate Hasse multiplicity at a matched point transfers to univariate root
 multiplicity of `Q(X, p(X))` at the matching `x`-coordinate. -/
 private theorem rootMultiplicity_composeY_toPoly_of_matched_point {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {Q : CBivariate F} {p : CPolynomial F} {x y : F} {m : Nat}
     (hmult : CBivariate.HasMultiplicityAtLeast Q x y m)
     (hmatch : CPolynomial.eval x p = y)
@@ -505,7 +508,7 @@ private theorem finset_mul_card_le_natDegree_of_rootMultiplicity_ge {F : Type*}
 /-- If a bounded-degree candidate agrees with enough distinct packed
 multiplicity-constrained points, it roots any valid interpolation witness. -/
 theorem composeY_eq_zero_of_enough_matching_multiplicity_points {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (Prod F F)} {params : GSInterpParams}
     {Q : CBivariate F} {p : CPolynomial F}
     (hQ : ValidInterpolationWitness points params Q)
@@ -565,7 +568,7 @@ theorem composeY_eq_zero_of_enough_matching_multiplicity_points {F : Type*}
 
 /-- Packed-point semantic completeness for the algebraic GS core. -/
 theorem gsCore_complete_of_enough_matches {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (Prod F F)}
     {interpContext : GSInterpContext F} {rootContext : GSRootContext F}
     {params : GSInterpParams}

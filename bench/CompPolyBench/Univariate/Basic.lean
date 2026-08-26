@@ -3,15 +3,20 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPolyBench.Univariate.Common
-import CompPoly.Fields.BN254
-import CompPoly.Univariate.NTT.FastMulLow
-import CompPoly.Univariate.NTTFast.FastMulLow
+public import CompPolyBench.Univariate.Common
+public import CompPoly.Fields.BN254
+public import CompPoly.Fields.BLS12_381
+public import CompPoly.Fields.BLS12_377
+public import CompPoly.Univariate.NTT.FastMulLow
+public import CompPoly.Univariate.NTTFast.FastMulLow
 
 /-!
 # Benchmarks for `CompPoly.Univariate.Basic`
 -/
+
+public section
 
 open CompPoly
 
@@ -26,7 +31,10 @@ def univariateBasicGroupInfos : List BenchGroupInfo := [
   ⟨"univariate-monic-remainder-medium-koalabear",
     "Univariate monic remainder, medium (KoalaBear)"⟩,
   ⟨"univariate-dense-goldilocks", "Univariate dense evaluation (Goldilocks)"⟩,
-  ⟨"univariate-dense-bn254", "Univariate dense evaluation (BN254)"⟩
+  ⟨"univariate-dense-bn254", "Univariate dense evaluation (BN254)"⟩,
+  ⟨"univariate-dense-bls12-381", "Univariate dense evaluation (BLS12-381)"⟩,
+  ⟨"univariate-dense-bls12-377", "Univariate dense evaluation (BLS12-377)"⟩,
+  ⟨"univariate-dense-babybear", "Univariate dense evaluation (BabyBear)"⟩
 ]
 
 /-- Benchmark dense univariate evaluation over a generic prime `ZMod` field. -/
@@ -59,48 +67,77 @@ private def runDenseUnivariateZMod (modulus : Nat) [Fact (Nat.Prime modulus)]
     records := #[sumRecord, hornerRecord]
   }, gen)
 
-/-- Benchmark dense KoalaBear univariate evaluation. -/
-private def runKoalaBearUnivariateDense (preset : BenchPreset) (gen : StdGen) :
+/-- Benchmark dense univariate evaluation over a canonical field and its native-word
+counterpart. `genCoeffs` draws canonical inputs, `toFast` transports them into the
+native-word representation, and the `*Budget` functions give the measured iteration
+count per preset for each row that is not on the shared default budget. -/
+private def runDenseUnivariateWithFast {F G : Type}
+    [Semiring F] [BEq F] [LawfulBEq F] [Semiring G] [BEq G] [LawfulBEq G]
+    (key fieldTitle canonicalFieldName fastFieldName : String)
+    (genCoeffs : Nat → StateM StdGen (Array F)) (toFast : Array F → Array G)
+    (canonicalChecksum : F → Nat) (fastChecksum : G → Nat)
+    (hornerBudget fastBudget fastHornerBudget : BenchPreset → Nat)
+    (preset : BenchPreset) (gen : StdGen) :
     IO (BenchGroup × StdGen) := do
-  let (denseCoeffs, gen) := (koalaBearArray 512 false).run gen
-  let (points, gen) := (koalaBearPoints 32).run gen
+  let (denseCoeffs, gen) := (genCoeffs 512).run gen
+  let (points, gen) := (genCoeffs 32).run gen
   let densePoly := cpolyOfArray denseCoeffs
-  let fastDenseCoeffs := koalaBearFastArray denseCoeffs
-  let fastPoints := koalaBearFastArray points
+  let fastDenseCoeffs := toFast denseCoeffs
+  let fastPoints := toFast points
   let fastDensePoly := cpolyOfArray fastDenseCoeffs
   let warmup := warmupIterations preset
   let measured := measuredIterations preset
-  let hornerMeasured := preset.selectNat 45000 6500 1300
-  let fastMeasured := preset.selectNat 63000 9000 1800
-  let fastHornerMeasured := preset.selectNat 490000 70000 14000
+  let hornerMeasured := hornerBudget preset
+  let fastMeasured := fastBudget preset
+  let fastHornerMeasured := fastHornerBudget preset
   let checksumIterations := groupChecksumIterations measured [
     hornerMeasured, fastMeasured, fastHornerMeasured
   ]
   let denseSum ← runTimed
-    "univariate-dense-sum" "CPolynomial" "eval sum-of-powers" "KoalaBear.Field"
+    "univariate-dense-sum" "CPolynomial" "eval sum-of-powers" canonicalFieldName
     "degree<512, dense, 32 points" preset warmup measured
     (fun i ↦ CPolynomial.eval (points.getD (i % points.size) 0) densePoly)
-    checksumKoalaBear (checksumIterations := checksumIterations)
+    canonicalChecksum (checksumIterations := checksumIterations)
   let fastDenseSum ← runTimed
     "univariate-dense-sum-fast" "CPolynomial" "eval sum-of-powers"
-    "KoalaBear.Fast.Field" "degree<512, dense, 32 points" preset warmup fastMeasured
+    fastFieldName "degree<512, dense, 32 points" preset warmup fastMeasured
     (fun i ↦ CPolynomial.eval (fastPoints.getD (i % fastPoints.size) 0) fastDensePoly)
-    checksumKoalaBearFast (checksumIterations := checksumIterations)
+    fastChecksum (checksumIterations := checksumIterations)
   let denseHorner ← runTimed
-    "univariate-dense-horner" "CPolynomial" "evalHorner" "KoalaBear.Field"
+    "univariate-dense-horner" "CPolynomial" "evalHorner" canonicalFieldName
     "degree<512, dense, 32 points" preset warmup hornerMeasured
     (fun i ↦ CPolynomial.evalHorner (points.getD (i % points.size) 0) densePoly)
-    checksumKoalaBear (checksumIterations := checksumIterations)
+    canonicalChecksum (checksumIterations := checksumIterations)
   let fastDenseHorner ← runTimed
-    "univariate-dense-horner-fast" "CPolynomial" "evalHorner" "KoalaBear.Fast.Field"
+    "univariate-dense-horner-fast" "CPolynomial" "evalHorner" fastFieldName
     "degree<512, dense, 32 points" preset warmup fastHornerMeasured
     (fun i ↦ CPolynomial.evalHorner (fastPoints.getD (i % fastPoints.size) 0) fastDensePoly)
-    checksumKoalaBearFast (checksumIterations := checksumIterations)
+    fastChecksum (checksumIterations := checksumIterations)
   pure ({
-    groupKey := "univariate-dense-koalabear",
-    title := "Univariate dense evaluation (KoalaBear)",
+    groupKey := key,
+    title := "Univariate dense evaluation (" ++ fieldTitle ++ ")",
     records := #[denseSum, denseHorner, fastDenseSum, fastDenseHorner]
   }, gen)
+
+/-- Benchmark dense KoalaBear univariate evaluation. -/
+private def runKoalaBearUnivariateDense (preset : BenchPreset) (gen : StdGen) :
+    IO (BenchGroup × StdGen) := do
+  runDenseUnivariateWithFast
+    "univariate-dense-koalabear" "KoalaBear" "KoalaBear.Field" "KoalaBear.Fast.Field"
+    (fun size ↦ koalaBearArray size false) koalaBearFastArray
+    checksumKoalaBear checksumKoalaBearFast
+    (fun p ↦ p.selectNat 45000 6500 1300) (fun p ↦ p.selectNat 63000 9000 1800)
+    (fun p ↦ p.selectNat 490000 70000 14000) preset gen
+
+/-- Benchmark dense BabyBear univariate evaluation. -/
+private def runBabyBearUnivariateDense (preset : BenchPreset) (gen : StdGen) :
+    IO (BenchGroup × StdGen) := do
+  runDenseUnivariateWithFast
+    "univariate-dense-babybear" "BabyBear" "BabyBear.Field" "BabyBear.Fast.Field"
+    (fun size ↦ babyBearArray size false) babyBearFastArray
+    checksumBabyBear checksumBabyBearFast
+    (fun p ↦ p.selectNat 45000 6500 1300) (fun p ↦ p.selectNat 63000 9000 1800)
+    (fun p ↦ p.selectNat 490000 70000 14000) preset gen
 
 /-- Benchmark sparse KoalaBear univariate evaluation. -/
 private def runKoalaBearUnivariateSparse (preset : BenchPreset) (gen : StdGen) :
@@ -383,12 +420,63 @@ private def runGoldilocksUnivariateDense (preset : BenchPreset) (gen : StdGen) :
     Goldilocks.fieldSize "univariate-dense-goldilocks" "goldilocks" "Goldilocks.Field"
     "Goldilocks" 40000 6000 1200 preset gen
 
+/-- Convert BN254 field inputs to the native eight-limb representation. -/
+private def bn254FastArray (xs : Array BN254.ScalarField) : Array BN254.Fast.ScalarField :=
+  xs.map BN254.Fast.ofField
+
+/-- Convert a fast BN254 element to a checksum word. -/
+private def checksumBn254Fast (x : BN254.Fast.ScalarField) : Nat :=
+  x.toNat
+
 /-- Benchmark dense BN254 univariate evaluation. -/
 private def runBn254UnivariateDense (preset : BenchPreset) (gen : StdGen) :
     IO (BenchGroup × StdGen) := do
-  runDenseUnivariateZMod
-    BN254.scalarFieldSize "univariate-dense-bn254" "bn254" "BN254.ScalarField" "BN254"
-    40000 6000 1200 preset gen
+  runDenseUnivariateWithFast
+    "univariate-dense-bn254" "BN254" "BN254.ScalarField" "BN254.Fast.ScalarField"
+    (fun size ↦ zmodArray BN254.scalarFieldSize size false) bn254FastArray
+    checksumZMod checksumBn254Fast
+    (fun p ↦ p.selectNat 40000 6000 1200) (fun p ↦ p.selectNat 20000 3000 600)
+    (fun p ↦ p.selectNat 160000 23000 4600) preset gen
+
+/-- Convert BLS12-381 field inputs to the native eight-limb representation. -/
+private def bls12_381FastArray (xs : Array BLS12_381.ScalarField) :
+    Array BLS12_381.Fast.ScalarField :=
+  xs.map BLS12_381.Fast.ofField
+
+/-- Convert a fast BLS12-381 element to a checksum word. -/
+private def checksumBls12_381Fast (x : BLS12_381.Fast.ScalarField) : Nat :=
+  x.toNat
+
+/-- Benchmark dense BLS12-381 univariate evaluation. -/
+private def runBls12_381UnivariateDense (preset : BenchPreset) (gen : StdGen) :
+    IO (BenchGroup × StdGen) := do
+  runDenseUnivariateWithFast
+    "univariate-dense-bls12-381" "BLS12-381" "BLS12_381.ScalarField"
+    "BLS12_381.Fast.ScalarField"
+    (fun size ↦ zmodArray BLS12_381.scalarFieldSize size false) bls12_381FastArray
+    checksumZMod checksumBls12_381Fast
+    (fun p ↦ p.selectNat 40000 6000 1200) (fun p ↦ p.selectNat 20000 3000 600)
+    (fun p ↦ p.selectNat 160000 23000 4600) preset gen
+
+/-- Convert BLS12-377 field inputs to the native eight-limb representation. -/
+private def bls12_377FastArray (xs : Array BLS12_377.ScalarField) :
+    Array BLS12_377.Fast.ScalarField :=
+  xs.map BLS12_377.Fast.ofField
+
+/-- Convert a fast BLS12-377 element to a checksum word. -/
+private def checksumBls12_377Fast (x : BLS12_377.Fast.ScalarField) : Nat :=
+  x.toNat
+
+/-- Benchmark dense BLS12-377 univariate evaluation. -/
+private def runBls12_377UnivariateDense (preset : BenchPreset) (gen : StdGen) :
+    IO (BenchGroup × StdGen) := do
+  runDenseUnivariateWithFast
+    "univariate-dense-bls12-377" "BLS12-377" "BLS12_377.ScalarField"
+    "BLS12_377.Fast.ScalarField"
+    (fun size ↦ zmodArray BLS12_377.scalarFieldSize size false) bls12_377FastArray
+    checksumZMod checksumBls12_377Fast
+    (fun p ↦ p.selectNat 40000 6000 1200) (fun p ↦ p.selectNat 20000 3000 600)
+    (fun p ↦ p.selectNat 160000 23000 4600) preset gen
 
 /-- Runnable `CompPoly.Univariate.Basic` benchmark tasks. -/
 def univariateBasicTasks : List BenchTask := [
@@ -411,7 +499,16 @@ def univariateBasicTasks : List BenchTask := [
     runGoldilocksUnivariateDense,
   BenchTask.fromGroupRunner
     ⟨"univariate-dense-bn254", "Univariate dense evaluation (BN254)"⟩
-    runBn254UnivariateDense
+    runBn254UnivariateDense,
+  BenchTask.fromGroupRunner
+    ⟨"univariate-dense-bls12-381", "Univariate dense evaluation (BLS12-381)"⟩
+    runBls12_381UnivariateDense,
+  BenchTask.fromGroupRunner
+    ⟨"univariate-dense-bls12-377", "Univariate dense evaluation (BLS12-377)"⟩
+    runBls12_377UnivariateDense,
+  BenchTask.fromGroupRunner
+    ⟨"univariate-dense-babybear", "Univariate dense evaluation (BabyBear)"⟩
+    runBabyBearUnivariateDense
 ]
 
 /-- Run selected evaluation and public monic-remainder benchmarks. -/

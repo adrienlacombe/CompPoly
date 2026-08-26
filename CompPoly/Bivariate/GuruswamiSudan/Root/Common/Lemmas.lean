@@ -3,15 +3,19 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.Root.Common
-import CompPoly.Bivariate.GuruswamiSudan.PolynomialCorrectness
+import all CompPoly.Univariate.Basic
+public import CompPoly.Bivariate.GuruswamiSudan.Root.Common
+public import CompPoly.Bivariate.GuruswamiSudan.PolynomialCorrectness
 
 /-!
 # Common Guruswami-Sudan Root Helper Lemmas
 
 Reusable proof facts for bounded bivariate root backends.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -159,7 +163,7 @@ theorem polynomialPrefix_zero {R : Type*} [Zero R] [BEq R] [LawfulBEq R]
   rfl
 
 theorem polynomialPrefix_succ {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (p : CPolynomial F) (depth : Nat) :
     polynomialPrefix p (depth + 1) =
       extendPrefix (polynomialPrefix p depth) depth (p.coeff depth) := by
@@ -265,7 +269,7 @@ theorem cpoly_mulPowCoeff_eq_coeff_mul_pow {R : Type*}
   simp [cpoly_powCoeff_eq_coeff_pow]
 
 theorem cpoly_coeff_zero_mul {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     (p q : CPolynomial F) :
     (p * q).coeff 0 = p.coeff 0 * q.coeff 0 := by
   rw [CPolynomial.coeff_mul]
@@ -311,7 +315,7 @@ theorem cpoly_mulPowCoeff_monomial_zero_depth_zero {F : Type*}
   rw [cpoly_coeff_zero_pow_monomial_zero]
 
 theorem composeY_coeff_zero_zipIdx_eq_range_aux {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     (xs : List (CPolynomial F)) (p accPoly : CPolynomial F) (accCoeff : F)
     (offset : Nat) (hacc : accPoly.coeff 0 = accCoeff) :
     List.foldl
@@ -343,7 +347,7 @@ theorem composeY_coeff_zero_zipIdx_eq_range_aux {F : Type*}
       rw [CPolynomial.coeff_add, cpoly_coeff_zero_mul, cpoly_coeff_zero_pow, hacc]
 
 theorem composeY_coeff_zero_fold_eq {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     (coeffs : Array (CPolynomial F)) (p : CPolynomial F) :
     List.foldl (fun acc y ↦ acc + (coeffs.getD y 0).coeff 0 * p.coeff 0 ^ y) 0
         (List.range' 0 coeffs.size) =
@@ -446,16 +450,22 @@ theorem composeY_zero {R : Type*}
   rfl
 
 theorem composeY_toPoly {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (Q : CBivariate F) (p : CPolynomial F) :
     (CBivariate.composeY Q p).toPoly = (CBivariate.toPoly Q).eval p.toPoly := by
   unfold CBivariate.composeY
   rw [CPolynomial.eval_toPoly]
   rw [CBivariate.toPoly_eq_map]
   rw [Polynomial.eval_map]
-  exact (Polynomial.eval₂_hom
+  have ringEquiv_toPoly (r : CPolynomial F) :
+      (CPolynomial.ringEquiv (R := F)).toRingHom r = r.toPoly := by
+    rw [RingEquiv.toRingHom_eq_coe]
+    exact CPolynomial.ringEquiv_apply r
+  have h := (Polynomial.eval₂_hom
     (f := (CPolynomial.ringEquiv (R := F)).toRingHom)
     (p := CPolynomial.toPoly Q) (x := p)).symm
+  rw [ringEquiv_toPoly, ringEquiv_toPoly] at h
+  exact h
 
 theorem initialCoefficientPolynomial_evalHorner_eq_composeYCoeff_monomial_zero
     {F : Type*} [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
@@ -485,13 +495,13 @@ theorem initialCoefficientPolynomial_evalHorner_eq_composeYCoeff_monomial_zero
         simp only [List.foldl_cons]
         apply ih
         dsimp [polyStep, coeffStep]
-        rw [cpoly_eval_add, hacc, cpoly_eval_monomial,
+        rw [cpoly_eval_add, hacc, cpoly_eval_monomial, CBivariate.coeff_eq_coeff_coeff,
           cpoly_mulPowCoeff_monomial_zero_depth_zero]
   exact hfold (List.range' 0 Q.val.size) 0 0
     (by simp [CPolynomial.eval_toPoly, CPolynomial.toPoly_zero])
 
 theorem composeYCoeff_monomial_zero_eq_composeY_coeff_zero {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (Q : CBivariate F) (p : CPolynomial F) :
     CBivariate.composeYCoeff Q (CPolynomial.monomial 0 (p.coeff 0)) 0 =
       (CBivariate.composeY Q p).coeff 0 := by
@@ -500,7 +510,7 @@ theorem composeYCoeff_monomial_zero_eq_composeY_coeff_zero {F : Type*}
   simpa using (composeY_coeff_zero_fold_eq Q.val p)
 
 theorem initialCoefficientPolynomial_eval_eq_composeY_coeff_zero {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (Q : CBivariate F) (p : CPolynomial F) :
     CPolynomial.eval (p.coeff 0) (initialCoefficientPolynomial Q) =
       (CBivariate.composeY Q p).coeff 0 := by
@@ -520,19 +530,19 @@ theorem rootsInFieldForNonzeroEquation_complete {F : Type*}
     exact hp (beq_iff_eq.mp hbeq)
 
 theorem composeY_of_composeYHorner_eq_zero {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     {Q : CBivariate F} {p : CPolynomial F}
     (h : CBivariate.composeYHorner Q p = 0) : CBivariate.composeY Q p = 0 := by
   simpa [CBivariate.composeY, CBivariate.composeYHorner, CPolynomial.eval_horner_eq_eval] using h
 
 theorem composeYHorner_eq_zero_of_composeY {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     {Q : CBivariate F} {p : CPolynomial F}
     (h : CBivariate.composeY Q p = 0) : CBivariate.composeYHorner Q p = 0 := by
   simpa [CBivariate.composeY, CBivariate.composeYHorner, CPolynomial.eval_horner_eq_eval] using h
 
 theorem isRootYDegreeLtBool_of_root {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     {Q : CBivariate F} {p : CPolynomial F} {k : Nat}
     (hdegree : degreeLt p k) (hroot : CBivariate.composeY Q p = 0) :
     isRootYDegreeLtBool Q k p = true := by
@@ -541,7 +551,7 @@ theorem isRootYDegreeLtBool_of_root {F : Type*}
   simp
 
 theorem rootsYDegreeLtFromCandidates_sound {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     {candidates : Array (CPolynomial F)} {Q : CBivariate F} {k : Nat}
     {p : CPolynomial F}
     (h : p ∈ (rootsYDegreeLtFromCandidates candidates Q k).toList) :
@@ -551,7 +561,7 @@ theorem rootsYDegreeLtFromCandidates_sound {F : Type*}
   exact ⟨degreeLt_of_degreeLtBool h.2.1, composeY_of_composeYHorner_eq_zero h.2.2⟩
 
 theorem rootsYDegreeLtFromCandidates_eraseDups_sound {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     {candidates : Array (CPolynomial F)} {Q : CBivariate F} {k : Nat}
     {p : CPolynomial F}
     (h : p ∈ (rootsYDegreeLtFromCandidates candidates Q k).eraseDups.toList) :
@@ -561,7 +571,7 @@ theorem rootsYDegreeLtFromCandidates_eraseDups_sound {F : Type*}
   exact rootsYDegreeLtFromCandidates_sound (by simpa using hmem)
 
 theorem rootsYDegreeLtFromCandidates_complete_of_mem {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     {candidates : Array (CPolynomial F)} {Q : CBivariate F} {k : Nat}
     {p : CPolynomial F}
     (hmem : p ∈ candidates.toList)
@@ -571,7 +581,7 @@ theorem rootsYDegreeLtFromCandidates_complete_of_mem {F : Type*}
   simp [hmem, isRootYDegreeLtBool_of_root hdegree hroot]
 
 theorem rootsYDegreeLtFromCandidates_eraseDups_complete_of_mem {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     {candidates : Array (CPolynomial F)} {Q : CBivariate F} {k : Nat}
     {p : CPolynomial F}
     (hmem : p ∈ candidates.toList)

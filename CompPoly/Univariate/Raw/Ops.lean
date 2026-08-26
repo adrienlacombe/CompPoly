@@ -4,13 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Gregor Mitscha-Baude, Derek Sorensen, Desmond Coles,
   Natalie Klaus, Dimitris Mitsios
 -/
-import CompPoly.Univariate.Raw.Core
+module
+
+import all CompPoly.Univariate.Raw.Core
+public import CompPoly.Univariate.Raw.Core
 
 /-!
 # Raw Univariate Polynomial Operations
 
 Operations and evaluation lemmas for raw computable univariate polynomials.
 -/
+
+public section
 
 namespace CompPoly
 

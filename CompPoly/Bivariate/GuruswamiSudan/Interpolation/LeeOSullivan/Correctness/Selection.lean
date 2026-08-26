@@ -3,14 +3,17 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.Interpolation.LeeOSullivan.Correctness.Common
+public import CompPoly.Bivariate.GuruswamiSudan.Interpolation.LeeOSullivan.Correctness.Common
 
 /-!
 # Lee-O'Sullivan Row Selection Helpers
 
 Correctness facts for the least-shifted-degree row scan used by the executable backend.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -20,14 +23,14 @@ namespace LeeOSullivan
 
 open PolynomialMatrix
 
-variable {F : Type*} [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+variable {F : Type*} [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
 
 def RowChoiceValid (M : PolynomialMatrix F) (shift : Array Nat)
     (choice : RowChoice F) : Prop :=
   choice.index < M.size ∧ choice.row = M.getD choice.index #[] ∧
     rowShiftedDegree? choice.row shift = some choice.degree
 
-omit [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [BEq F] [LawfulBEq F] [DecidableEq F] in
 private theorem betterRowChoice_true_candidate_degree_le
     {candidate current : RowChoice F}
     (h : betterRowChoice candidate current = true) :
@@ -38,7 +41,7 @@ private theorem betterRowChoice_true_candidate_degree_le
   · omega
   · have hdegree : candidate.degree = current.degree := heq
     omega
-omit [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [BEq F] [LawfulBEq F] [DecidableEq F] in
 private theorem betterRowChoice_false_current_degree_le
     {candidate current : RowChoice F}
     (h : betterRowChoice candidate current = false) :
@@ -48,14 +51,14 @@ private theorem betterRowChoice_false_current_degree_le
   · simp [hlt] at h
   · omega
 
-omit [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [BEq F] [LawfulBEq F] [DecidableEq F] in
 private theorem betterRowChoice_not_true_current_degree_le
     {candidate current : RowChoice F}
     (h : ¬ betterRowChoice candidate current = true) :
     current.degree ≤ candidate.degree :=
   betterRowChoice_false_current_degree_le (Bool.eq_false_iff.mpr h)
 
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 private theorem leastShiftedDegreeRowStep?_none
     {M : PolynomialMatrix F} {shift : Array Nat}
     {best : Option (RowChoice F)} {i : Nat}
@@ -77,7 +80,7 @@ private theorem leastShiftedDegreeRowStep?_none
           · simp [hdeg, hbetter] at h
           · simp [hdeg, hbetter] at h
 
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 private theorem leastShiftedDegreeRowStep?_some_of_best_some
     {M : PolynomialMatrix F} {shift : Array Nat}
     {best : Option (RowChoice F)} {current : RowChoice F} {i : Nat}
@@ -96,7 +99,7 @@ private theorem leastShiftedDegreeRowStep?_some_of_best_some
       · exact ⟨current,
           by simp [hbest, hdeg, hbetter]⟩
 
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 private theorem leastShiftedDegreeRowStep?_preserves_degree_le
     {M : PolynomialMatrix F} {shift : Array Nat}
     {best : Option (RowChoice F)} {choice : RowChoice F} {d i : Nat}
@@ -133,7 +136,7 @@ private theorem leastShiftedDegreeRowStep?_preserves_degree_le
         rw [hchoice]
         exact hcurrent
 
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 private theorem leastShiftedDegreeRowStep?_degree_le_of_row
     {M : PolynomialMatrix F} {shift : Array Nat}
     {best : Option (RowChoice F)} {choice : RowChoice F} {d i : Nat}
@@ -165,7 +168,7 @@ private theorem leastShiftedDegreeRowStep?_degree_le_of_row
         rw [hchoice]
         exact betterRowChoice_not_true_current_degree_le hbetter
 
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 private theorem leastShiftedDegreeFold_some_of_best_some
     {M : PolynomialMatrix F} {shift : Array Nat}
     (xs : List Nat) {best : Option (RowChoice F)} {current : RowChoice F}
@@ -181,7 +184,7 @@ private theorem leastShiftedDegreeFold_some_of_best_some
         ⟨choice, hstep⟩
       exact ih (best := leastShiftedDegreeRowStep? M shift best i)
         (current := choice) hstep
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 private theorem leastShiftedDegreeFold_preserves_degree_le
     {M : PolynomialMatrix F} {shift : Array Nat}
     (xs : List Nat) {best : Option (RowChoice F)} {choice : RowChoice F} {d : Nat}
@@ -206,7 +209,7 @@ private theorem leastShiftedDegreeFold_preserves_degree_le
       exact ih (best := leastShiftedDegreeRowStep? M shift best i)
         ⟨stepChoice, hstep, hstepBound⟩
         (by simpa only [List.foldl_cons] using hfold)
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 private theorem leastShiftedDegreeFold_degree_le_of_mem
     {M : PolynomialMatrix F} {shift : Array Nat}
     (xs : List Nat) {best : Option (RowChoice F)} {choice : RowChoice F}
@@ -236,7 +239,7 @@ private theorem leastShiftedDegreeFold_degree_le_of_mem
               (by simpa [hstep] using hfold)
       · exact ih (best := leastShiftedDegreeRowStep? M shift best x)
           (by simpa only [List.foldl_cons] using hfold) hi
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 private theorem leastShiftedDegreeFold_none
     {M : PolynomialMatrix F} {shift : Array Nat}
     (xs : List Nat) {best : Option (RowChoice F)}
@@ -258,7 +261,7 @@ private theorem leastShiftedDegreeFold_none
         exact hrow
       · exact htail.2 j hj
 
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 private theorem leastShiftedDegreeFold_valid
     {M : PolynomialMatrix F} {shift : Array Nat}
     (xs : List Nat) {best : Option (RowChoice F)}
@@ -324,7 +327,7 @@ private theorem leastShiftedDegreeFold_valid
         choice
         (by simpa only [List.foldl_cons] using hfold)
 
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 theorem leastShiftedDegreeChoice?_some_valid
     {M : PolynomialMatrix F} {shift : Array Nat} {choice : RowChoice F}
     (hchoice : leastShiftedDegreeChoice? M shift = some choice) :
@@ -336,7 +339,7 @@ theorem leastShiftedDegreeChoice?_some_valid
     (by intro i hi; exact List.mem_range.mp hi)
     choice hchoice
 
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 theorem leastShiftedDegreeChoice?_degree_le
     {M : PolynomialMatrix F} {shift : Array Nat}
     {choice : RowChoice F} {i d : Nat}
@@ -351,7 +354,7 @@ theorem leastShiftedDegreeChoice?_degree_le
     (M := M) (shift := shift) (List.range M.size)
     hchoice (List.mem_range.mpr hi) hdeg'
 
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 theorem leastShiftedDegreeChoice?_some_of_degree
     {M : PolynomialMatrix F} {shift : Array Nat} {i d : Nat}
     (hi : i < M.size)
@@ -372,7 +375,7 @@ theorem leastShiftedDegreeChoice?_some_of_degree
       refine ⟨choice, rfl, ?_⟩
       exact leastShiftedDegreeChoice?_degree_le hchoice hi hdeg
 
-omit [LawfulBEq F] [Nontrivial F] [DecidableEq F] in
+omit [LawfulBEq F] [DecidableEq F] in
 theorem leastShiftedDegreeRow?_some_valid
     {M : PolynomialMatrix F} {shift : Array Nat} {row : PolynomialRow F}
     (hrow : leastShiftedDegreeRow? M shift = some row) :

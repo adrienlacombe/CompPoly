@@ -3,10 +3,12 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Frantisek Silvasi, Julian Sutherland, Andrei Burdușa, Derek Sorensen, Dimitris Mitsios
 -/
-import CompPoly.Multivariate.Lawful
-import CompPoly.Univariate.Basic
-import Mathlib.Algebra.Algebra.Basic
-import Mathlib.Algebra.Ring.Hom.Defs
+module
+
+public import CompPoly.Multivariate.Lawful
+public import CompPoly.Univariate.Basic
+public import Mathlib.Algebra.Algebra.Basic
+public import Mathlib.Algebra.Ring.Hom.Defs
 
 /-!
 # Computable multivariate polynomials
@@ -36,6 +38,8 @@ that depend on ring instances (monomial orders, `rename`, `aeval`, etc.) are in
   `CPoly.CMvPolynomial.degreeOf`, `CPoly.CMvPolynomial.degrees`,
   `CPoly.CMvPolynomial.vars`: Degree and support queries.
 -/
+
+@[expose] public section
 namespace CPoly
 
 open Std
@@ -107,7 +111,7 @@ lemma fromUnlawful_fold_eq_fold_fromUnlawful₀
   · intro init
     simp only [List.foldl_cons, ih]
     congr 1; ext m
-    simp only [CMvMonomial.eq_1, coeff_add]
+    simp only [coeff_add]
     unfold coeff Lawful.fromUnlawful
     iterate 3 erw [Unlawful.filter_get]
     exact Unlawful.add_getD?
@@ -118,10 +122,9 @@ lemma fromUnlawful_fold_eq_fold_fromUnlawful {t : Unlawful n R}
     {f : CMvMonomial n → R → Unlawful n R} :
   Lawful.fromUnlawful (ExtTreeMap.foldl (fun u m c => (f m c) + u) 0 t) =
   ExtTreeMap.foldl (fun l m c => (Lawful.fromUnlawful (f m c)) + l) 0 t := by
-  simp only [CMvMonomial.eq_1, ExtTreeMap.foldl_eq_foldl_toList]
+  simp only [ExtTreeMap.foldl_eq_foldl_toList]
   erw [fromUnlawful_fold_eq_fold_fromUnlawful₀ 0]
   simp
-  rfl
 
 end
 

@@ -3,15 +3,18 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.CoeffRows
-import CompPoly.Bivariate.GuruswamiSudan.Interpolation.Correctness
-import CompPoly.Univariate.CoefficientInterpolation
-import CompPoly.Univariate.Vanishing
+public import CompPoly.Bivariate.CoeffRows
+public import CompPoly.Bivariate.GuruswamiSudan.Interpolation.Correctness
+public import CompPoly.Univariate.CoefficientInterpolation
+public import CompPoly.Univariate.Vanishing
 
 /-!
 # Lee-O'Sullivan Interpolation Basics
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -45,7 +48,7 @@ def distinctXCoordinatesBool {F : Type*} [BEq F] (points : Array (F × F)) : Boo
 
 /-- The Lee-O'Sullivan basis polynomial `P_i`. -/
 def leeOSullivanBasisPolynomial {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (R G : CPolynomial F) (params : GSInterpParams) (i : Nat) : CBivariate F :=
   let t := leeOSullivanT params i
   (CBivariate.Y : CBivariate F) ^ (i - t) *
@@ -54,7 +57,7 @@ def leeOSullivanBasisPolynomial {F : Type*}
 
 /-- Lee-O'Sullivan basis rows from already-built `R` and `G`. -/
 def leeOSullivanBasisRowsWithRG {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (R G : CPolynomial F) (params : GSInterpParams) : PolynomialMatrix F :=
   let width := leeOSullivanWidth params
   (List.range width).map
@@ -63,7 +66,7 @@ def leeOSullivanBasisRowsWithRG {F : Type*}
 
 /-- Lee-O'Sullivan basis rows from packed points. -/
 def leeOSullivanBasisRows {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (V : CPolynomial.VanishingPolynomialContext F)
     (E : CPolynomial.BatchEvalContext F)
     (points : Array (F × F)) (params : GSInterpParams) : PolynomialMatrix F :=

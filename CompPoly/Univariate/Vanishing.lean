@@ -3,14 +3,18 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Univariate.BatchEval.SubproductTree
+import all CompPoly.Univariate.Basic
+public import CompPoly.Univariate.BatchEval.SubproductTree
 
 /-!
 # Vanishing Polynomials for Array Nodes
 
 Reusable executable construction of `∏ x in xs, (X - x)`.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 

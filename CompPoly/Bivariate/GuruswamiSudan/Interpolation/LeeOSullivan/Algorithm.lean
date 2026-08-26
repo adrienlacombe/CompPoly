@@ -3,9 +3,10 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.Interpolation.LeeOSullivan.Basic
-import CompPoly.LinearAlgebra.PolynomialMatrix.ShiftedReduction
+public import CompPoly.Bivariate.GuruswamiSudan.Interpolation.LeeOSullivan.Basic
+public import CompPoly.LinearAlgebra.PolynomialMatrix.ShiftedReduction
 
 /-!
 # Executable Lee-O'Sullivan Interpolation
@@ -19,6 +20,8 @@ shifted polynomial-row reduction.
     Groebner basis perspective*][LOS06]
 -/
 
+@[expose] public section
+
 namespace CompPoly
 
 namespace GuruswamiSudan
@@ -27,7 +30,7 @@ namespace LeeOSullivan
 
 open PolynomialMatrix
 
-variable {F : Type*} [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+variable {F : Type*} [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
 
 /-- Candidate row selected by least-shifted-degree scanning. -/
 structure RowChoice (F : Type*) [Zero F] where
@@ -36,7 +39,7 @@ structure RowChoice (F : Type*) [Zero F] where
   degree : Nat
 
 /-- Tie-breaking order for least-shifted-degree row selection. -/
-def betterRowChoice [Zero F] (candidate current : RowChoice F) : Bool :=
+def betterRowChoice (candidate current : RowChoice F) : Bool :=
   candidate.degree < current.degree ||
     (candidate.degree == current.degree && candidate.index < current.index)
 

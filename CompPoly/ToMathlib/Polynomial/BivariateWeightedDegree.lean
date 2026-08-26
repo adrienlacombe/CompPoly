@@ -3,10 +3,11 @@ Copyright (c) 2026 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
+module
 
-import CompPoly.ToMathlib.Polynomial.BivariateDegree
-import Mathlib.Algebra.BigOperators.Group.Finset.Basic
-import Mathlib.Algebra.Polynomial.BigOperators
+public import CompPoly.ToMathlib.Polynomial.BivariateDegree
+public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
+public import Mathlib.Algebra.Polynomial.BigOperators
 
 /-!
 # Mathlib-Facing Bivariate Weighted-Degree Helpers
@@ -14,6 +15,8 @@ import Mathlib.Algebra.Polynomial.BigOperators
 This file extends `Polynomial.Bivariate` with weighted-degree algebra that is generic
 and reusable across downstream protocol developments.
 -/
+
+@[expose] public section
 
 open Polynomial
 open scoped Polynomial.Bivariate
@@ -110,9 +113,10 @@ lemma natWeightedDegree_monomial (i j u v : ℕ) :
     natWeightedDegree (monomial (F := F) i j) u v = u * i + v * j := by
   classical
   simp only [natWeightedDegree, monomial]
-  refine le_antisymm ?_ ?_ <;> norm_num
-  · intros b hb
-    simp [coeff_monomial] at hb
+  refine le_antisymm ?_ ?_
+  · refine Finset.sup_le ?_
+    intro b hb
+    simp at hb
     simp [← hb]
   · refine le_trans ?_ (Finset.le_sup
       (f := fun m ↦ u * (Polynomial.monomial j (Polynomial.monomial i 1) |>.coeff m |>.natDegree)

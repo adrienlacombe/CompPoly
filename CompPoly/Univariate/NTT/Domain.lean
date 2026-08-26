@@ -3,10 +3,12 @@ Copyright (c) 2026 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Salih Erdem Koçak, Doran Pamukçu, Valerii Huhnin
 -/
-import CompPoly.Univariate.Raw
-import Init.Data.Vector.OfFn
-import Mathlib.Data.Nat.Log
-import Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots
+module
+
+public import CompPoly.Univariate.Raw
+public import Init.Data.Vector.OfFn
+public import Mathlib.Data.Nat.Log
+public import Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots
 
 /-!
 # NTT Domain
@@ -14,6 +16,8 @@ import Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots
 This file defines the radix-2 NTT domain parameters and basic raw-polynomial
 shape helpers used by forward/inverse NTT.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 namespace CPolynomial
@@ -26,12 +30,11 @@ structure Domain (R : Type*) [Field R] where
   logN : Nat
   omega : R
   primitive : IsPrimitiveRoot omega (2 ^ logN)
-  natCast_ne_zero : (((2 ^ logN : Nat) : R) ≠ 0)
 
 namespace Domain
 
 /-- Domain size. -/
-@[simp] def n (D : Domain R) : Nat := 2 ^ D.logN
+@[simp, implicit_reducible] def n (D : Domain R) : Nat := 2 ^ D.logN
 
 /-- Index type for vectors over the domain. -/
 abbrev Idx (D : Domain R) := Fin D.n
@@ -48,7 +51,6 @@ def inverse (D : Domain R) : Domain R where
   omega := D.omegaInv
   primitive := by
     simpa [omegaInv] using D.primitive.inv
-  natCast_ne_zero := D.natCast_ne_zero
 
 /-- Multiplicative inverse of the domain size in `R`. -/
 @[inline] def nInv (D : Domain R) : R := ((D.n : Nat) : R)⁻¹
@@ -58,6 +60,11 @@ def inverse (D : Domain R) : Domain R where
 
 @[simp] lemma n_ne_zero (D : Domain R) : D.n ≠ 0 := by
   exact Nat.ne_of_gt D.n_pos
+
+/-- The size of an NTT domain is nonzero in its coefficient field. -/
+theorem natCast_ne_zero (D : Domain R) : ((D.n : Nat) : R) ≠ 0 := by
+  let : NeZero D.n := ⟨D.n_ne_zero⟩
+  exact D.primitive.neZero'.out
 
 section RawHelpers
 
@@ -129,7 +136,7 @@ Generic adapter from field-specific radix-2 domain tables to a best-fitting doma
 The adapter chooses `logN = Nat.clog 2 requiredLen`, then returns `none` if that exponent
 is outside the supported table.
 -/
-def bestDomainForLength? [Field R]
+def bestDomainForLength?
     (maxLogN : Nat) (domainOfLogN : (logN : Nat) → logN ≤ maxLogN → Domain R)
     (domainOfLogN_logN : ∀ logN hlogN, (domainOfLogN logN hlogN).logN = logN)
     (requiredLen : Nat) : Option (FittingDomain R requiredLen) :=

@@ -3,9 +3,10 @@ Copyright (c) 2024 - 2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chung Thai Nguyen, Quang Dao
 -/
+module
 
-import CompPoly.Data.Classes.DCast
-import CompPoly.Fields.Binary.Tower.Abstract.Basis
+public import CompPoly.Data.Classes.DCast
+public import CompPoly.Fields.Binary.Tower.Abstract.Basis
 
 /-!
 # Concrete Binary Tower Core
@@ -13,10 +14,13 @@ import CompPoly.Fields.Binary.Tower.Abstract.Basis
 Core definitions for the concrete bitvector model of the binary tower.
 -/
 
+@[expose] public section
+
 namespace ConcreteBinaryTower
 
 open Polynomial
 
+@[implicit_reducible]
 def ConcreteBTField : ℕ → Type := fun k => BitVec (2 ^ k)
 
 section BitVecDCast
@@ -699,7 +703,6 @@ theorem join_eq_iff_dcast_extractLsb {k : ℕ} (h_pos : k > 0) (x : ConcreteBTFi
       x = join (k := k) h_pos hi_btf lo_btf ↔
         dcast sum.symm x = BitVec.append (msbs := hi_btf) (lsbs := lo_btf) := by
     -- avoid simp (which may use the target theorem as a simp lemma)
-    dsimp [sum]
     exact (eq_join_iff_dcast_eq_append (k := k) (h_pos := h_pos) (x := x)
       (hi := hi_btf) (lo := lo_btf))
 
@@ -715,16 +718,25 @@ theorem join_eq_iff_dcast_extractLsb {k : ℕ} (h_pos : k > 0) (x : ConcreteBTFi
       (h_hi_gt_0 := hpow)
       (h_lo_gt_0 := hpow)
       (x := dcast sum.symm x))
-    have h1 :
-        dcast sum.symm x = BitVec.append (msbs := hi_btf) (lsbs := lo_btf) ↔
-          (hi_btf = dcast (by omega)
+    -- now rewrite the extractLsb of dcast sum.symm x into extractLsb of x
+    constructor
+    · intro hx
+      have hx' : dcast sum.symm x =
+          dcast (by rfl) (BitVec.append (msbs := hi_btf) (lsbs := lo_btf)) := by
+        simpa [dcast_eq] using hx
+      have hparts := h.mp hx'
+      simp_rw [BitVec.extractLsb_dcast_eq (x := x) (h := sum.symm)] at hparts
+      exact hparts
+    · intro hparts
+      have hparts' :
+          hi_btf = dcast (by omega)
               (BitVec.extractLsb (hi := 2 ^ (k - 1) + 2 ^ (k - 1) - 1) (lo := 2 ^ (k - 1))
                 (dcast sum.symm x)) ∧
             lo_btf = dcast (by omega)
-              (BitVec.extractLsb (hi := 2 ^ (k - 1) - 1) (lo := 0) (dcast sum.symm x))) := by
-      simpa using h
-    -- now rewrite the extractLsb of dcast sum.symm x into extractLsb of x
-    simpa [BitVec.extractLsb_dcast_eq (x := x) (h := sum.symm)] using h1
+              (BitVec.extractLsb (hi := 2 ^ (k - 1) - 1) (lo := 0) (dcast sum.symm x)) := by
+        simpa [BitVec.extractLsb_dcast_eq (x := x) (h := sum.symm)] using hparts
+      have hx' := h.mpr hparts'
+      simpa [dcast_eq] using hx'
 
   have h_final :
       (hi_btf = dcast (by omega)
@@ -1146,9 +1158,9 @@ def concrete_pow_nat {k : ℕ} (x : ConcreteBTField k) (n : ℕ) : ConcreteBTFie
   else concrete_mul x (concrete_pow_nat (concrete_mul x x) (n / 2))
 
 lemma cast_mul (m n : ℕ) {x y : ConcreteBTField m} (h_eq : m = n) :
-    (cast (by exact cast_ConcreteBTField_eq m n h_eq) (x * y)) =
-  (cast (by exact cast_ConcreteBTField_eq m n h_eq) x) *
-  (cast (by exact cast_ConcreteBTField_eq m n h_eq) y) := by
+    (cast (cast_ConcreteBTField_eq m n h_eq) (x * y)) =
+  (cast (cast_ConcreteBTField_eq m n h_eq) x) *
+  (cast (cast_ConcreteBTField_eq m n h_eq) y) := by
   subst h_eq
   rfl
 
@@ -1359,9 +1371,9 @@ section NumericCasting
 
 -- Natural number casting
 def natCast {k : ℕ} (n : ℕ) : ConcreteBTField k := if n % 2 = 0 then zero else one
-def natCast_zero {k : ℕ} : natCast (k:=k) 0 = zero := by rfl
+theorem natCast_zero {k : ℕ} : natCast (k:=k) 0 = zero := by rfl
 
-def natCast_succ {k : ℕ} (n : ℕ) : natCast (k:=k) (n + 1) = natCast (k:=k) n + 1 := by
+theorem natCast_succ {k : ℕ} (n : ℕ) : natCast (k:=k) (n + 1) = natCast (k:=k) n + 1 := by
   by_cases h : n % 2 = 0
   · -- If n % 2 = 0, then (n + 1) % 2 = 1
     have h_succ : (n + 1) % 2 = 1 := by omega
@@ -1390,7 +1402,7 @@ def intCast {k : ℕ} (n : ℤ) : ConcreteBTField k := if n % 2 = 0 then zero el
 instance {k : ℕ} : IntCast (ConcreteBTField k) where
   intCast n:= intCast n
 
-def intCast_ofNat {k : ℕ} (n : ℕ) : intCast (k:=k) (n : ℤ) = natCast n := by
+theorem intCast_ofNat {k : ℕ} (n : ℕ) : intCast (k:=k) (n : ℤ) = natCast n := by
   have h_mod_eq : (n : ℤ) % 2 = 0 ↔ n % 2 = 0 := by omega
   by_cases h : n % 2 = 0
   · -- Case : n % 2 = 0
@@ -1405,7 +1417,7 @@ def intCast_ofNat {k : ℕ} (n : ℕ) : intCast (k:=k) (n : ℤ) = natCast n := 
 @[simp] lemma my_neg_mod_two (m : ℤ) : ( - m) % 2 = if m % 2 = 0 then 0 else 1 := by omega
 @[simp] lemma mod_two_eq_zero (m : ℤ) : m % 2 = ( - m) % 2 := by omega
 
-def intCast_negSucc {k : ℕ} (n : ℕ) : intCast (k:=k) (Int.negSucc n)
+theorem intCast_negSucc {k : ℕ} (n : ℕ) : intCast (k:=k) (Int.negSucc n)
   = - (↑(n + 1) : ConcreteBTField k) := by
   by_cases h_mod : (n + 1) % 2 = 0
   · -- ⊢ intCast (Int.negSucc n) = - ↑(n + 1)

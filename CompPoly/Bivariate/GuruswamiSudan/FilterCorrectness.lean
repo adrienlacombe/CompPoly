@@ -3,8 +3,9 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.CoreCorrectness
+public import CompPoly.Bivariate.GuruswamiSudan.CoreCorrectness
 
 /-!
 # Guruswami-Sudan Candidate Filter Correctness
@@ -12,6 +13,8 @@ import CompPoly.Bivariate.GuruswamiSudan.CoreCorrectness
 Correctness and completeness lemmas for generic packed filtering over algebraic
 `gsCore` outputs.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -42,7 +45,7 @@ theorem mem_gsFilteredCore_iff {F : Type*}
 /-- Every filtered candidate is a sound algebraic core output and is within the
 packed mismatch radius. -/
 theorem gsFilteredCore_sound {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (Prod F F)}
     {interpContext : GSInterpContext F} {rootContext : GSRootContext F}
     {params : GSInterpParams} {radius : Nat}
@@ -66,7 +69,7 @@ theorem gsFilteredCore_sound {F : Type*}
 /-- Filtered-core completeness for candidates that root every valid
 interpolation witness and pass the packed distance filter. -/
 theorem gsFilteredCore_complete_of_roots_all_valid_witnesses {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (Prod F F)}
     {interpContext : GSInterpContext F} {rootContext : GSRootContext F}
     {params : GSInterpParams} {radius : Nat}
@@ -86,7 +89,7 @@ theorem gsFilteredCore_complete_of_roots_all_valid_witnesses {F : Type*}
 
 /-- Packed-point semantic completeness for the filtered GS core. -/
 theorem gsFilteredCore_complete_of_enough_matches {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {points : Array (Prod F F)}
     {interpContext : GSInterpContext F} {rootContext : GSRootContext F}
     {params : GSInterpParams} {radius : Nat}

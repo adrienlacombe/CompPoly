@@ -3,10 +3,11 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.Root.Common
-import CompPoly.Bivariate.GuruswamiSudan.Root.ShiftedSubstitution
-import CompPoly.Data.Array.Lemmas
+public import CompPoly.Bivariate.GuruswamiSudan.Root.Common
+public import CompPoly.Bivariate.GuruswamiSudan.Root.ShiftedSubstitution
+public import CompPoly.Data.Array.Lemmas
 
 /-!
 # Alekhnovich Bivariate Bounded Root Search
@@ -22,6 +23,8 @@ phase. The public output is exactly filtered against `Q(X, p(X)) = 0` and
     Decoding of Reed-Solomon Codes*, IEEE Transactions on Information Theory
     51(7), 2257-2265, 2005][Ale05]
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -52,7 +55,7 @@ deriving BEq, DecidableEq
 
 /-- Shift, truncate, strip the visible `X`-adic factor, and report the residual. -/
 def shiftedResidualUpTo {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (Q : CBivariate F) (f : CPolynomial F) (t N : Nat) :
     AlekhnovichResidual F :=
   let T := substituteYPolynomialPlusXPowerYTruncated Q f t N
@@ -66,7 +69,7 @@ def shiftedResidualUpTo {F : Type*}
 
 /-- Compose an outer prefix with a suffix prefix returned by a residual call. -/
 def composeRootPrefixes {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     (outer suffix : RootPrefix F) : RootPrefix F :=
   { prefixPoly := outer.prefixPoly + shiftPolynomialByXPower suffix.prefixPoly outer.precision
     precision := outer.precision + suffix.precision }
@@ -87,7 +90,7 @@ def normalizeAlekhnovichInput {F : Type*}
 
 /-- Alekhnovich root prefixes with explicit fuel. -/
 def alekhnovichRootPrefixesWithFuel {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (fieldRoots : FieldRootContext F) :
     Nat → CBivariate F → Nat → Array (RootPrefix F)
   | 0, _Q, _N => #[]
@@ -123,7 +126,7 @@ def alekhnovichRootPrefixesWithFuel {F : Type*}
 
 /-- Alekhnovich root prefixes through the requested precision. -/
 def alekhnovichRootPrefixes {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (fieldRoots : FieldRootContext F) (Q : CBivariate F) (N : Nat) :
     Array (RootPrefix F) :=
   alekhnovichRootPrefixesWithFuel fieldRoots (N + 1) Q N
@@ -142,7 +145,7 @@ mutual
 completion. Prefixes already at precision `k` are simply truncated to the final
 degree bound. -/
 def finishAlekhnovichPrefixWithAlekhnovichWithFuel {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (fieldRoots : FieldRootContext F) :
     Nat → CBivariate F → Nat → RootPrefix F → Array (CPolynomial F)
   | 0, _Q, k, rootPrefix =>
@@ -163,7 +166,7 @@ def finishAlekhnovichPrefixWithAlekhnovichWithFuel {F : Type*}
 
 /-- Materialize bounded-degree candidates from Alekhnovich prefixes. -/
 def alekhnovichRootCandidatesWithFuel {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (fieldRoots : FieldRootContext F) :
     Nat → CBivariate F → Nat → Array (CPolynomial F)
   | 0, Q, k =>
@@ -187,14 +190,14 @@ end
 
 /-- Finish one Alekhnovich prefix with Alekhnovich-only suffix completion. -/
 def finishAlekhnovichPrefixWithAlekhnovich {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (fieldRoots : FieldRootContext F) (Q : CBivariate F) (k : Nat)
     (rootPrefix : RootPrefix F) : Array (CPolynomial F) :=
   finishAlekhnovichPrefixWithAlekhnovichWithFuel fieldRoots (k + 1) Q k rootPrefix
 
 /-- Materialize bounded-degree candidates from Alekhnovich prefixes. -/
 def alekhnovichRootCandidates {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (fieldRoots : FieldRootContext F) (Q : CBivariate F) (k : Nat) :
     Array (CPolynomial F) :=
   alekhnovichRootCandidatesWithFuel fieldRoots (k + 1) Q k
@@ -203,7 +206,7 @@ def alekhnovichRootCandidates {F : Type*}
 deduplication. The zero bivariate input follows the finite-output convention
 used by the Roth backend and returns no roots. -/
 def alekhnovichRootsYDegreeLt {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (fieldRoots : FieldRootContext F) (Q : CBivariate F) (k : Nat) :
     Array (CPolynomial F) :=
   if Q == 0 then

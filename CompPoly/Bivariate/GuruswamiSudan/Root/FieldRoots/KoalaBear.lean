@@ -3,11 +3,12 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.Root.FieldRoots.FiniteField
-import CompPoly.Fields.KoalaBear
-import CompPoly.Univariate.NTT.KoalaBear
-import CompPoly.Univariate.Roots.SmoothSubgroup
+public import CompPoly.Bivariate.GuruswamiSudan.Root.FieldRoots.FiniteField
+public import CompPoly.Fields.KoalaBear
+public import CompPoly.Univariate.NTT.KoalaBear
+public import CompPoly.Univariate.Roots.SmoothSubgroup
 
 /-!
 # KoalaBear Guruswami-Sudan Field-Root Backends
@@ -16,6 +17,8 @@ Concrete finite-field root backends for canonical KoalaBear and native-word fast
 KoalaBear. Both use the generic finite-field algorithm directly over their field
 carriers.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -70,7 +73,11 @@ private theorem koalaBearSmoothRootProduct_valid
     koalaBearSmoothCyclicRootContext.validInput
       (CPolynomial.Roots.FiniteField.finiteFieldRootProductWith M D
         koalaBearFiniteFieldContext p) := by
-  simpa [koalaBearSmoothCyclicRootContext, koalaBearFiniteFieldContext] using
+  change CPolynomial.Roots.FiniteField.smoothSplitterInput
+    KoalaBear.fieldSize KoalaBear.primitiveRoot KoalaBear.smoothRootSchedule
+      (CPolynomial.Roots.FiniteField.finiteFieldRootProductWith M D
+        koalaBearFiniteFieldContext p)
+  simpa [koalaBearFiniteFieldContext] using
     (CPolynomial.Roots.FiniteField.finiteFieldRootProductWith_smoothSplitterInput
       M D koalaBearFiniteFieldContext KoalaBear.primitiveRoot
       KoalaBear.smoothRootSchedule hp)
@@ -123,10 +130,9 @@ def fastKoalaBearFiniteFieldContext :
     simp [KoalaBear.Field, Nat.card_eq_fintype_card, ZMod.card]
   frobenius_fixed := by
     intro a
-    apply KoalaBear.Fast.toField_injective
-    rw [KoalaBear.Fast.toField_npow]
-    simpa [KoalaBear.Field, KoalaBear.fieldSize] using
-      ZMod.pow_card (KoalaBear.Fast.toField a)
+    apply Montgomery.Native32.toField_injective
+    rw [Montgomery.Native32.toField_npow]
+    simp [KoalaBear.fieldSize]
 
 /-- Primitive generator transported to native-word fast KoalaBear. -/
 def fastKoalaBearPrimitiveRoot : KoalaBear.Fast.Field :=
@@ -139,7 +145,7 @@ lemma fastKoalaBearPrimitiveRoot_order :
   have h := MulEquiv.orderOf_eq KoalaBear.Fast.ringEquiv.toMulEquiv
     (KoalaBear.Fast.ofField KoalaBear.primitiveRoot)
   rw [← h]
-  simpa [KoalaBear.Fast.ringEquiv_apply, KoalaBear.Fast.toField_ofField] using
+  simpa [KoalaBear.Fast.ringEquiv, KoalaBear.Fast.ofField] using
     KoalaBear.primitiveRoot_order
 
 /-- Smooth cyclic splitter context for native-word fast KoalaBear. -/
@@ -166,7 +172,7 @@ def fastKoalaBearSmoothCyclicRootContext :
         KoalaBear.fieldSize fastKoalaBearPrimitiveRoot KoalaBear.smoothRootSchedule h)
     (by
       intro M D p a _hvalid hp hroot
-      letI : Finite KoalaBear.Fast.Field :=
+      let : Finite KoalaBear.Fast.Field :=
         Finite.of_equiv KoalaBear.Field KoalaBear.Fast.ringEquiv.toEquiv.symm
       exact CPolynomial.Roots.FiniteField.smoothLinearFactorsAlgorithmWith_complete
         M D (CPolynomial.BatchEvalContext.horner KoalaBear.Fast.Field)
@@ -189,7 +195,11 @@ private theorem fastKoalaBearSmoothRootProduct_valid
     fastKoalaBearSmoothCyclicRootContext.validInput
       (CPolynomial.Roots.FiniteField.finiteFieldRootProductWith M D
         fastKoalaBearFiniteFieldContext p) := by
-  simpa [fastKoalaBearSmoothCyclicRootContext, fastKoalaBearFiniteFieldContext] using
+  change CPolynomial.Roots.FiniteField.smoothSplitterInput
+    KoalaBear.fieldSize fastKoalaBearPrimitiveRoot KoalaBear.smoothRootSchedule
+      (CPolynomial.Roots.FiniteField.finiteFieldRootProductWith M D
+        fastKoalaBearFiniteFieldContext p)
+  simpa [fastKoalaBearFiniteFieldContext] using
     (CPolynomial.Roots.FiniteField.finiteFieldRootProductWith_smoothSplitterInput
       M D fastKoalaBearFiniteFieldContext fastKoalaBearPrimitiveRoot
       KoalaBear.smoothRootSchedule hp)

@@ -3,15 +3,19 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Gregor Mitscha-Baude, Derek Sorensen, Desmond Coles
 -/
-import Mathlib.Algebra.Tropical.Basic
-import Mathlib.RingTheory.Polynomial.Basic
-import CompPoly.Data.Array.Lemmas
+module
+
+public import Mathlib.Algebra.Tropical.Basic
+public import Mathlib.RingTheory.Polynomial.Basic
+public import CompPoly.Data.Array.Lemmas
 
 /-!
 # Raw Computable Univariate Polynomials
 
 Core definitions for array-backed computable univariate polynomials.
 -/
+
+public section
 
 open Polynomial
 
@@ -24,17 +28,17 @@ namespace CompPoly
   Two arrays may represent the same polynomial via zero-padding,
   for example `#[1,2,3] = #[1,2,3,0,0,0,...]`.
 -/
-@[reducible, inline, specialize]
+@[expose, reducible, inline, specialize]
 def CPolynomial.Raw (R : Type*) := Array R
 
 namespace CPolynomial.Raw
 
 /-- Construct a `CPolynomial.Raw` from an array of coefficients. -/
-@[reducible]
+@[expose, reducible]
 def mk {R : Type*} (coeffs : Array R) : CPolynomial.Raw R := coeffs
 
 /-- Extract the underlying array of coefficients. -/
-@[reducible]
+@[expose, reducible]
 def coeffs {R : Type*} (p : CPolynomial.Raw R) : Array R := p
 
 variable {R : Type*}
@@ -445,11 +449,11 @@ theorem isCanonical_iff_size_eq_zero_or_getLastD_ne_zero [Zero R]
   · intro h
     rcases Nat.eq_zero_or_pos p.size with h0 | hp
     · exact Or.inl h0
-    · exact Or.inr (by simpa [Array.getLastD, hp] using h hp)
+    · exact Or.inr (by simpa [Array.getLastD, Array.getLast, hp] using h hp)
   · intro h hp
     rcases h with h0 | hlast
     · exact (Nat.ne_of_gt hp h0).elim
-    · simpa [Array.getLastD, hp] using hlast
+    · simpa [Array.getLastD, Array.getLast, hp] using hlast
 
 /-- Computational canonicality criterion in non-dependent form. -/
 theorem trim_eq_iff_size_eq_zero_or_getLastD_ne_zero [Zero R] [BEq R] [LawfulBEq R]

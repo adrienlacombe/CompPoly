@@ -3,10 +3,13 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Gregor Mitscha-Baude, Derek Sorensen
 -/
-import Mathlib.Algebra.Tropical.Basic
-import Mathlib.RingTheory.Polynomial.Basic
-import CompPoly.Data.Array.Lemmas
-import CompPoly.Univariate.Raw.Proofs
+module
+
+import all CompPoly.Univariate.Raw.Proofs
+public import Mathlib.Algebra.Tropical.Basic
+public import Mathlib.RingTheory.Polynomial.Basic
+public import CompPoly.Data.Array.Lemmas
+public import CompPoly.Univariate.Raw.Proofs
 
 /-!
   # Quotient of Univariate Polynomials
@@ -18,6 +21,8 @@ import CompPoly.Univariate.Raw.Proofs
   Operations on `CPolynomial.Raw` (addition, multiplication, etc.) are shown to respect the
   equivalence relation and thus descend to the quotient.
 -/
+
+public section
 namespace CompPoly
 
 namespace CPolynomial
@@ -44,7 +49,7 @@ theorem equiv_trans [Zero Q] {p q r : CPolynomial.Raw Q} :
   simp_all [Trim.equiv]
 
 /-- The `CPolynomial.Raw.equiv` is indeed an equivalence relation. -/
-instance instEquivalenceEquiv [Zero R] : Equivalence (equiv (R := R)) where
+theorem instEquivalenceEquiv [Zero R] : Equivalence (equiv (R := R)) where
   refl := equiv_refl
   symm := equiv_symm
   trans := equiv_trans
@@ -58,6 +63,7 @@ instance Raw.instSetoidCPolynomial [Zero R] : Setoid (CPolynomial.Raw R) where
 
   This quotient identifies polynomials that differ only by trailing zeros, and is intended
   to be equivalent to mathlib's `Polynomial R`. -/
+@[expose]
 def QuotientCPolynomial (R : Type*) [Zero R] := Quotient (@Raw.instSetoidCPolynomial R _)
 
 namespace QuotientCPolynomial
@@ -548,7 +554,8 @@ instance : AddCommGroup (QuotientCPolynomial R) where
   zsmul_zero' := nsmul_zero
   zsmul_succ' := by
     intro n a
-    simpa [zsmulRec] using nsmul_succ n a
+    change nsmul n.succ a = nsmul n a + a
+    exact nsmul_succ n a
   zsmul_neg' := by
     intro n a
     rfl
@@ -727,13 +734,14 @@ variable [Ring R] [BEq R] [LawfulBEq R]
 instance : Ring (QuotientCPolynomial R) where
   intCast_ofNat := by intro n; simp [IntCast.intCast]; rfl
   intCast_negSucc := by
-    -- By definition of `Int.negSucc`, we have `Int.negSucc n = - (n + 1)`.
-    have h_neg_succ : ∀ n : ℕ, Int.negSucc n = - (n + 1 : ℤ) := by grind
-    convert h_neg_succ
-    convert Quotient.eq using 1
-    simp +decide
-    simp +decide [ Raw.C, Raw.neg ]
-    grind
+    intro n
+    apply Quotient.sound
+    intro i
+    cases i with
+    | zero =>
+        simp [CPolynomial.Raw.C, CPolynomial.Raw.neg, Int.negSucc_eq]
+    | succ i =>
+        simp [CPolynomial.Raw.C, CPolynomial.Raw.neg]
 end Ring
 
 section CommRing

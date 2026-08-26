@@ -4,13 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Gregor Mitscha-Baude, Derek Sorensen, Desmond Coles,
   Natalie Klaus, Dimitris Mitsios, Valerii Huhnin
 -/
-import CompPoly.Univariate.Raw.Division
+module
+
+import all CompPoly.Univariate.Raw.Division
+public import CompPoly.Univariate.Raw.Division
 
 /-!
 # Raw Univariate Polynomial Proofs
 
 Proofs about operations on raw computable univariate polynomials.
 -/
+
+public section
 
 namespace CompPoly
 
@@ -35,8 +40,8 @@ lemma pow_zero (p : CPolynomial.Raw R) :
 
 lemma pow_succ (p : CPolynomial.Raw R) (n : ℕ) :
     p ^ (n + 1) = p * (p ^ n) := by
-      convert ( Function.iterate_succ_apply' ( mul p ) n ( C 1 ) )
-           using 1
+  change (mul p)^[n + 1] (C 1) = mul p ((mul p)^[n] (C 1))
+  rw [Function.iterate_succ_apply']
 
 section AddDefs
 
@@ -73,7 +78,8 @@ theorem add_size {p q : CPolynomial.Raw Q} : (addRaw p q).size = max p.size q.si
 theorem add_coeff {p q : CPolynomial.Raw Q} {i : ℕ} (hi : i < (addRaw p q).size) :
     (addRaw p q)[i] = p.coeff i + q.coeff i := by
   simp [addRaw]
-  by_cases hi' : i < p.size <;> by_cases hi'' : i < q.size <;> simp_all
+  by_cases hi' : i < p.size <;> by_cases hi'' : i < q.size <;>
+    simp_all [Array.rightpad_getElem_eq_getD]
 
 theorem add_coeff? (p q : CPolynomial.Raw Q) (i : ℕ) :
     (addRaw p q).coeff i = p.coeff i + q.coeff i := by
@@ -438,11 +444,12 @@ lemma smul_addRaw_distrib [LawfulBEq R] :
           intros a' q r
           simp [smul, addRaw]
           refine' congr_arg _ ( Array.ext _ _ );
-            simp [Array.size_zipWith]
+            simp [Array.size_zipWith, Array.size_rightpad]
           · intro i hi₁ hi₂
             rw [Array.getElem_zipWith, Array.getElem_zipWith ]
             simp +decide [mul_add ]
-            by_cases hi₃ : i < q.size <;> by_cases hi₄ : i < r.size <;> simp_all +decide
+            by_cases hi₃ : i < q.size <;> by_cases hi₄ : i < r.size <;>
+              simp_all +decide [Array.rightpad_getElem_eq_getD]
 
 lemma smul_distrib_trim [LawfulBEq R] :
     ∀ (a' : R) (q r : CPolynomial.Raw R), (smul a' (q + r)).trim
@@ -461,9 +468,11 @@ lemma smul_distrib_trim [LawfulBEq R] :
           have h_trim_eq : ∀ p q : CPolynomial.Raw R,
               (∀ i, p.coeff i = q.coeff i) → p.trim = q.trim := by
             exact fun p q a => Trim.eq_of_equiv a
-          convert h_trim_eq _ _ _ using 1
-          unfold addRaw; simp +decide [h_coeff ]
-          grind
+          rw [← show (smul a' q + smul a' r).trim = smul a' q + smul a' r by
+            show ((addRaw (smul a' q) (smul a' r)).trim).trim =
+              (addRaw (smul a' q) (smul a' r)).trim
+            exact Trim.trim_twice _]
+          exact h_trim_eq _ _ (fun i => by rw [h_coeff, add_coeff_trimmed])
 
 lemma coeff_smul_add_distrib [LawfulBEq R] (a : R) (q r : CPolynomial.Raw R) (i : ℕ) :
     (smul a (q + r)).coeff i = (smul a q).coeff i + (smul a r).coeff i := by
@@ -683,9 +692,10 @@ lemma X_mul_eq_mulX_trim [LawfulBEq R]
   simp [X, Array.zipIdx]
   congr! 1
   · convert smul_zero_trim p using 1
-    convert zero_add_trim _ using 1
-    · exact congr_arg _ ( by exact Eq.symm (mulPowX_zero (smul 0 p)) )
-    · infer_instance
+    · convert zero_add_trim _ using 1
+      · exact congr_arg _ (by exact mulPowX_zero (smul 0 p))
+      · exact ‹LawfulBEq R›
+    · rfl
   · rw [ smul_one_eq_self ]
     rfl
 
@@ -719,10 +729,9 @@ lemma smul_monomial_one_trim [DecidableEq R] [LawfulBEq R]
   unfold smul monomial
   simp +decide
   split_ifs with h;
-  · convert trim_replicate_zero ( n + 1 ) using 1;
-    congr! 1;
-    · simp +decide [ h, Array.replicate_succ ];
-    · infer_instance;
+  · subst r
+    simpa +decide [Array.replicate_succ] using
+      (trim_replicate_zero (R := R) (n + 1))
   · exact Trim.push_trim (Array.replicate n 0) r h
 
 lemma smul_mulPowX_coeff [LawfulBEq R] (a : R) (q : CPolynomial.Raw R) (i k : ℕ) :
@@ -966,8 +975,8 @@ protected theorem add_mul [LawfulBEq R] (p q r : CPolynomial.Raw R) :
             (fun i => ((smul ((p + q).coeff i) r).mulPowX i).coeff k)) := by
       convert coeff_mul_eq_sum_range ( p + q ) r k ( p.size + q.size ) _ using 1
       have h_size_sum : (p + q).size ≤ max p.size q.size := by
-        convert Trim.size_le_size ( p.addRaw q ) using 1
-        exact Eq.symm add_size
+        change (p.addRaw q).trim.size ≤ max p.size q.size
+        exact le_trans (Trim.size_le_size (p.addRaw q)) (le_of_eq add_size)
       exact le_trans h_size_sum ( max_le ( Nat.le_add_right _ _ ) ( Nat.le_add_left _ _ ) )
     have h_split : List.sum ((List.range (p.size + q.size)).map
         (fun i => ((smul ((p + q).coeff i) r).mulPowX i).coeff k)) =
@@ -1097,13 +1106,10 @@ theorem neg_add_cancel [LawfulBEq R] (p : CPolynomial.Raw R) : -p + p = 0 := by
 
 lemma sub_coeff [LawfulBEq R] (p q : CPolynomial.Raw R) (i : ℕ) :
     (p - q).coeff i = p.coeff i - q.coeff i := by
-  have h_add : coeff (p + -q) i =
-      coeff p i + coeff (-q) i := by
-    convert add_coeff_trimmed p ( -q ) i using 1
-  have h_neg : coeff (-q) i = -coeff q i := by
-    convert neg_coeff _ _
-  convert h_add.trans ( congr_arg₂ ( · + · ) rfl h_neg ) using 1
-  exact sub_eq_add_neg (p.coeff i) (q.coeff i)
+  change coeff (p + -q) i = p.coeff i - q.coeff i
+  rw [add_coeff_trimmed]
+  change p.coeff i + (neg q).coeff i = p.coeff i - q.coeff i
+  rw [neg_coeff, ← sub_eq_add_neg]
 
 /-- `Raw.sub` reduces to `p + -q`, whose final `add` step trims, so the result is canonical. -/
 theorem sub_is_trimmed [LawfulBEq R] (p q : CPolynomial.Raw R) : (p - q).trim = p - q := by

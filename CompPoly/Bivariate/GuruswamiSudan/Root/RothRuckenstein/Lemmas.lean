@@ -3,11 +3,13 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.Root.RothRuckenstein.Algorithm
-import CompPoly.Bivariate.GuruswamiSudan.Root.Common.Lemmas
-import CompPoly.Bivariate.GuruswamiSudan.PolynomialCorrectness
-import CompPoly.Data.Array.Lemmas
+import all CompPoly.Univariate.Basic
+public import CompPoly.Bivariate.GuruswamiSudan.Root.RothRuckenstein.Algorithm
+public import CompPoly.Bivariate.GuruswamiSudan.Root.Common.Lemmas
+public import CompPoly.Bivariate.GuruswamiSudan.PolynomialCorrectness
+public import CompPoly.Data.Array.Lemmas
 
 /-!
 # Roth-Ruckenstein Correctness Support
@@ -15,6 +17,8 @@ import CompPoly.Data.Array.Lemmas
 Coefficient, composition, and root-filter lemmas used by the Roth-Ruckenstein
 correctness proofs.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -41,7 +45,8 @@ theorem cpoly_size_eq_natDegree_succ_of_ne_zero {R : Type*} [Zero R]
       have hval : p.val = (#[] : CPolynomial.Raw R) := Array.eq_empty_of_size_eq_zero hs
       apply (hp ?_).elim
       apply CPolynomial.ext
-      simpa using hval
+      change p.val = (#[] : CPolynomial.Raw R)
+      exact hval
   | succ n =>
       simp
 
@@ -165,7 +170,7 @@ theorem initialCoefficientPolynomial_coeff_fold {F : Type*}
         by_cases hjmem : j ∈ ys <;> simp [hjy, hjmem]
 
 theorem initialCoefficientPolynomial_coeff_of_lt {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (Q : CBivariate F) {j : Nat} (hj : j < Q.val.size) :
     (initialCoefficientPolynomial Q).coeff j = CBivariate.coeff Q 0 j := by
   unfold initialCoefficientPolynomial
@@ -437,7 +442,7 @@ theorem cbivar_xAdicOrder?_some_coeff_eq_zero_of_lt {R : Type*}
   · exact cbivar_coeff_eq_zero_of_y_size_le Q (Nat.le_of_not_lt hy)
 
 theorem cbivar_toPoly_eq_C_X_pow_mul_divXPower_of_xAdicOrder {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     {Q : CBivariate F} {order : Nat} (horder : CBivariate.xAdicOrder? Q = some order) :
     CBivariate.toPoly Q =
       Polynomial.C (Polynomial.X ^ order : Polynomial F) *
@@ -487,7 +492,7 @@ theorem cbivar_xAdicOrder?_fold_none {R : Type*}
                 exact htail.2 z hzTail
 
 theorem cbivar_xAdicOrder?_none_eq_zero {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     {Q : CBivariate F} (h : CBivariate.xAdicOrder? Q = none) : Q = 0 := by
   apply (CPolynomial.eq_zero_iff_coeff_zero (p := (Q : CPolynomial (CPolynomial F)))).mpr
   intro y
@@ -517,7 +522,7 @@ theorem cpoly_dropXPower_add {R : Type*} [Zero R]
       simp [CPolynomial.dropXPower]
 
 theorem dropXPower_eq_C_add_X_mul_dropXPower_succ {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     (p : CPolynomial F) (depth : Nat) :
     CPolynomial.dropXPower p depth =
       CPolynomial.C (p.coeff depth) +
@@ -570,7 +575,7 @@ theorem polynomial_monomial_substitution_sum {F : Type*} [Field F]
   rw [← Polynomial.C_eq_natCast (R := F) (Nat.choose y t)]
 
 theorem foldl_cpoly_toPoly_add {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F]
+    [Field F] [BEq F] [LawfulBEq F]
     (f : Nat → CPolynomial F) :
     ∀ (xs : List Nat) (acc : CPolynomial F) (accPoly : Polynomial F),
       acc.toPoly = accPoly →
@@ -588,7 +593,7 @@ theorem foldl_cpoly_toPoly_add {F : Type*}
       rw [CPolynomial.toPoly_add, hacc]
 
 theorem cpoly_monomial_substitution_sum {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (a coeff : F) (p : CPolynomial F) (x y : Nat) :
     (List.range' 0 (y + 1)).foldl
         (fun acc t ↦
@@ -597,13 +602,20 @@ theorem cpoly_monomial_substitution_sum {F : Type*}
         0 =
       CPolynomial.monomial x coeff * (CPolynomial.C a + CPolynomial.X * p) ^ y := by
   apply (CPolynomial.ringEquiv (R := F)).injective
+  have ringEquiv_toPoly (r : CPolynomial F) :
+      (CPolynomial.ringEquiv (R := F)).toRingHom r = r.toPoly := by
+    rw [RingEquiv.toRingHom_eq_coe]
+    exact CPolynomial.ringEquiv_apply r
   change
-    ((List.range' 0 (y + 1)).foldl
+    (CPolynomial.ringEquiv (R := F)).toRingHom
+      ((List.range' 0 (y + 1)).foldl
         (fun acc t ↦
           acc + CPolynomial.monomial (x + t)
             (coeff * (Nat.choose y t : F) * a ^ (y - t)) * p ^ t)
-        0).toPoly =
-      (CPolynomial.monomial x coeff * (CPolynomial.C a + CPolynomial.X * p) ^ y).toPoly
+        0) =
+      (CPolynomial.ringEquiv (R := F)).toRingHom
+        (CPolynomial.monomial x coeff * (CPolynomial.C a + CPolynomial.X * p) ^ y)
+  rw [ringEquiv_toPoly, ringEquiv_toPoly]
   rw [foldl_cpoly_toPoly_add
     (fun t ↦
       CPolynomial.monomial (x + t) (coeff * (Nat.choose y t : F) * a ^ (y - t)) *

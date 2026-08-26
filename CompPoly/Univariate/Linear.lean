@@ -3,13 +3,18 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Desmond Coles, Derek Sorensen
 -/
-import CompPoly.Univariate.Basic
+module
+
+import all CompPoly.Univariate.Basic
+public import CompPoly.Univariate.Basic
 
 /-!
 # Linear Algebra API for Computable Univariate Polynomials
 
 This file contains linear maps and instance-stable bounded-degree predicates for `CPolynomial`.
 -/
+
+public section
 
 namespace CompPoly
 
@@ -27,6 +32,11 @@ def lcoeff (n : ℕ) : (CPolynomial R) →ₗ[R] R where
   map_add' p q := coeff_add p q n
   map_smul' r p := coeff_smul r p n
 
+/-- Applying `lcoeff n` returns the coefficient of degree `n`. -/
+@[simp]
+theorem lcoeff_apply (n : ℕ) (p : CPolynomial R) : lcoeff n p = coeff p n := by
+  rfl
+
 end LinearMaps
 
 section DegreeBounds
@@ -40,6 +50,16 @@ def degreeLE (n : WithBot ℕ) : Set (CPolynomial R) :=
 /-- The set of `CPolynomial R` consisting of polynomials of degree < `n`. -/
 def degreeLT (n : ℕ) : Set (CPolynomial R) :=
   { p | p.val.degreeBound < n }
+
+/-- Membership in `degreeLE` is the corresponding degree bound. -/
+theorem mem_degreeLE {n : WithBot ℕ} {p : CPolynomial R} :
+    p ∈ degreeLE (R := R) n ↔ p.degree ≤ n := by
+  rfl
+
+/-- Membership in `degreeLT` is the corresponding strict degree bound. -/
+theorem mem_degreeLT {n : ℕ} {p : CPolynomial R} :
+    p ∈ degreeLT (R := R) n ↔ p.degree < n := by
+  rfl
 
 /-- `degreeLT n` is exactly the bounded-size carrier storing at most `n` coefficients. -/
 theorem mem_degreeLT_iff_size_le {n : ℕ} {p : CPolynomial R} :
@@ -110,11 +130,13 @@ instance (n : ℕ) : AddCommMonoid ↥(degreeLT (R := R) n) where
   add_assoc := by
     intro a b c
     apply Subtype.ext
-    simpa using (CPolynomial.add_assoc a.1 b.1 c.1)
+    change (a.1 + b.1) + c.1 = a.1 + (b.1 + c.1)
+    exact CPolynomial.add_assoc a.1 b.1 c.1
   add_comm := by
     intro a b
     apply Subtype.ext
-    simpa using (CPolynomial.add_comm a.1 b.1)
+    change a.1 + b.1 = b.1 + a.1
+    exact CPolynomial.add_comm a.1 b.1
   zero_add := by
     intro a
     apply Subtype.ext
@@ -131,7 +153,8 @@ instance (n : ℕ) : AddCommMonoid ↥(degreeLT (R := R) n) where
   nsmul_succ := by
     intro m p
     apply Subtype.ext
-    simpa using (CPolynomial.nsmul_succ m p.1)
+    change (m + 1) • p.1 = m • p.1 + p.1
+    exact CPolynomial.nsmul_succ m p.1
 
 instance (n : ℕ) : Module R ↥(degreeLT (R := R) n) where
   smul := (· • ·)
@@ -142,7 +165,8 @@ instance (n : ℕ) : Module R ↥(degreeLT (R := R) n) where
   mul_smul := by
     intro r s p
     apply Subtype.ext
-    simpa using (CPolynomial.mul_smul r s p.1)
+    change (r * s) • p.1 = r • s • p.1
+    exact CPolynomial.mul_smul r s p.1
   smul_zero := by
     intro r
     apply Subtype.ext
@@ -154,7 +178,8 @@ instance (n : ℕ) : Module R ↥(degreeLT (R := R) n) where
   add_smul := by
     intro r s p
     apply Subtype.ext
-    simpa using (CPolynomial.add_smul r s p.1)
+    change (r + s) • p.1 = r • p.1 + s • p.1
+    exact CPolynomial.add_smul r s p.1
   zero_smul := by
     intro p
     apply Subtype.ext
@@ -171,6 +196,12 @@ def degreeLTCoeffs (n : ℕ) : ↥(degreeLT (R := R) n) →ₗ[R] (Fin n → R) 
     intro r p
     funext i
     exact coeff_smul r p.1 i
+
+/-- Applying `degreeLTCoeffs` returns the corresponding bounded coefficient. -/
+@[simp]
+theorem degreeLTCoeffs_apply (n : ℕ) (p : ↥(degreeLT (R := R) n)) (i : Fin n) :
+    degreeLTCoeffs n p i = coeff p.1 i := by
+  rfl
 
 end DegreeLTSubtype
 

@@ -3,9 +3,10 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.Root.Common.Lemmas
-import CompPoly.Bivariate.GuruswamiSudan.Root.ShiftedSubstitution
+public import CompPoly.Bivariate.GuruswamiSudan.Root.Common.Lemmas
+public import CompPoly.Bivariate.GuruswamiSudan.Root.ShiftedSubstitution
 
 /-!
 # Shifted Substitution Lemmas
@@ -14,6 +15,8 @@ Semantic proof surface for the generic shifted substitution. The executable
 operation is available independently of these heavier algebraic facts.
 -/
 
+@[expose] public section
+
 namespace CompPoly
 
 namespace GuruswamiSudan
@@ -21,7 +24,7 @@ namespace GuruswamiSudan
 /-- The univariate coefficient sum produced by one `Y`-coefficient in shifted
 substitution composes to the corresponding binomial expansion. -/
 theorem shiftedSubstitutionCoeffTerm_sum {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (coeffY f g : CPolynomial F) (t y : Nat) :
     (List.range (y + 1)).foldl
         (fun acc r ↦ acc + shiftedSubstitutionCoeffTerm coeffY f t y r * g ^ r)
@@ -43,7 +46,7 @@ theorem shiftedSubstitutionCoeffTerm_sum {F : Type*}
 /-- Composing the bivariate contribution from one `Y`-coefficient gives the
 corresponding univariate shifted-substitution term. -/
 theorem composeY_shiftedSubstitutionCoeffFold {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (coeffY f g : CPolynomial F) (t y : Nat) :
     CBivariate.composeY
         ((List.range (y + 1)).foldl
@@ -79,7 +82,7 @@ theorem composeY_shiftedSubstitutionCoeffFold {F : Type*}
 
 /-- Semantic correctness of the shifted substitution `Y = f(X) + X^t Y`. -/
 theorem composeY_substituteYPolynomialPlusXPowerY {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (Q : CBivariate F) (f g : CPolynomial F) (t : Nat) :
     CBivariate.composeY (substituteYPolynomialPlusXPowerY Q f t) g =
       CBivariate.composeY Q (f + CPolynomial.X ^ t * g) := by

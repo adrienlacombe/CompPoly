@@ -3,14 +3,18 @@ Copyright (c) 2024 - 2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chung Thai Nguyen, Quang Dao
 -/
+module
 
-import CompPoly.Fields.Binary.Tower.Concrete.Algebra
+public import CompPoly.Fields.Binary.Tower.Concrete.Algebra
+public import Mathlib.Algebra.Ring.Ext
 
 /-!
 # Concrete Binary Tower Basis
 
 Basis constructions for the concrete bitvector binary tower.
 -/
+
+@[expose] public section
 
 set_option backward.isDefEq.respectTransparency false
 namespace ConcreteBinaryTower
@@ -108,10 +112,10 @@ def basisSucc (k : ℕ) : Basis (Fin 2) (ConcreteBTField k) (ConcreteBTField (k 
     rw [Submodule.mem_span]
     intro p h_p_contains_basis
     have h_one_in_p : (1 : ConcreteBTField (k + 1)) ∈ p := by
-      convert h_p_contains_basis (Set.mem_range_self (0 : Fin 2));
+      simpa using h_p_contains_basis (Set.mem_range_self (0 : Fin 2))
 
     have h_gen_in_p : generator ∈ p := by
-      convert h_p_contains_basis (Set.mem_range_self (1 : Fin 2)); simp
+      simpa using h_p_contains_basis (Set.mem_range_self (1 : Fin 2))
 
     -- Now, use the lemma from your project that decomposes any element `x`
     -- into a linear combination of the basis vectors.
@@ -181,7 +185,7 @@ theorem minPoly_of_powerBasisSucc_generator (k : ℕ) :
   unfold powerBasisSucc
   simp only
   rw [←C_mul']
-  letI: Fintype (ConcreteBTField k) := (getBTFResult k).instFintype
+  let: Fintype (ConcreteBTField k) := (getBTFResult k).instFintype
   refine Eq.symm (minpoly.unique' (ConcreteBTField k) (Z (k + 1)) ?_ ?_ ?_)
   · exact (definingPoly_is_monic (s:=Z (k)))
   · exact aeval_definingPoly_at_Z_succ k
@@ -234,7 +238,7 @@ theorem minPoly_of_powerBasisSucc_generator (k : ℕ) :
         let r := q.coeff 0
         have hc : c = q.leadingCoeff := by
           rw [Polynomial.leadingCoeff]
-          exact congrArg q.toFinsupp.2 (id (Eq.symm hqNatDeg))
+          exact congrArg q.toFinsupp.coeff (id (Eq.symm hqNatDeg))
         have hc_ne_zero : c ≠ 0 := by
           rw [hc]
           by_contra h_c_eq_zero
@@ -299,6 +303,8 @@ def hli_level_diff_0 (l : ℕ) :
     rw [Ideal.submodule_span_eq]
     rw [Ideal.span_singleton_one]
 
+set_option linter.defProp false in
+/-- Reducible Prop-valued helper for `letI` scalar-tower instances. -/
 @[reducible] def isScalarTower_succ_right (l r : ℕ) (h_le : l ≤ r) :=
     instAlgebraTowerConcreteBTF.toIsScalarTower (i:=l) (j:=r) (k:=r+1)
     (h1:=by omega) (h2:=by omega)
@@ -347,7 +353,9 @@ def multilinearBasis (l r : ℕ) (h_le : l ≤ r) :
       (b:=by
         convert prevMultilinearBasis;
       ) (c:=by
-        convert (powerBasisSucc (r1)).basis
+        convert (powerBasisSucc (r1)).basis using 1
+        · rw [powerBasisSucc_dim (k:=r1)]
+        · exact Semiring.ext rfl rfl
       )
     convert res
     -- Basis are equal under the same @ConcreteBTFieldAlgebra
@@ -452,7 +460,7 @@ theorem multilinearBasis_apply (r : ℕ) : ∀ l : ℕ, (h_le : l ≤ r) → ∀
   | succ r1 ih_r1 =>
     set r := r1 + 1 with hr
     intro l h_l_le_r j
-    haveI instAlgebraR : Algebra (ConcreteBTField r) (ConcreteBTField r) :=
+    have instAlgebraR : Algebra (ConcreteBTField r) (ConcreteBTField r) :=
       ConcreteBTFieldAlgebra (l:=r) (r:=r) (h_le:=by omega)
     if h_r_sub_l : r - l = 0 then
       rw [multilinearBasis]
@@ -484,21 +492,21 @@ theorem multilinearBasis_apply (r : ℕ) : ∀ l : ℕ, (h_le : l ≤ r) → ∀
       have h_r1_eq_l_plus_prevDiff : r1 = l + prevDiff := by omega
       have h_r : r = r1 + 1 := by omega
       have h1 : l + (r - l - 1) = r1 := by omega
-      letI instAlgebraPrev : Algebra (ConcreteBTField l) (ConcreteBTField (r1)) :=
+      let instAlgebraPrev : Algebra (ConcreteBTField l) (ConcreteBTField (r1)) :=
         ConcreteBTFieldAlgebra (l:=l) (r:=r1) (h_le:=by omega)
       set prevMultilinearBasis :=
         multilinearBasis (l:=l) (r:=r1) (h_le:=by omega) with h_prevMultilinearBasis
       rw! [h_r1_sub_l] at prevMultilinearBasis
-      letI instAlgebra : Algebra (ConcreteBTField l) (ConcreteBTField (r1 + 1)) :=
+      let instAlgebra : Algebra (ConcreteBTField l) (ConcreteBTField (r1 + 1)) :=
         ConcreteBTFieldAlgebra (l:=l) (r:=r1 + 1) (h_le:=by omega)
       rw! (castMode:=.all) [h1]
 
-      letI instAlgebraSucc : Algebra (ConcreteBTField (r1)) (ConcreteBTField (r1 + 1)) := by
+      let instAlgebraSucc : Algebra (ConcreteBTField (r1)) (ConcreteBTField (r1 + 1)) := by
         exact algebra_adjacent_tower (r1)
-      letI instModuleSucc : Module (ConcreteBTField l) (ConcreteBTField (r1 + 1)) := by
+      let instModuleSucc : Module (ConcreteBTField l) (ConcreteBTField (r1 + 1)) := by
         exact instAlgebra.toModule
 
-      letI : IsScalarTower (ConcreteBTField l) (ConcreteBTField (r1))
+      let : IsScalarTower (ConcreteBTField l) (ConcreteBTField (r1))
         (ConcreteBTField (r1 + 1)) := by
         exact isScalarTower_succ_right (l:=l) (r:=r1) (h_le:=by omega)
       rw [Basis.smulTower_apply]
@@ -507,7 +515,7 @@ theorem multilinearBasis_apply (r : ℕ) : ∀ l : ℕ, (h_le : l ≤ r) → ∀
       -- simp_rw [h_.r]
       rw [cast_eq, cast_eq]
 
-      letI instAlgebra2 : Algebra (ConcreteBTField r1) (ConcreteBTField r) :=
+      let instAlgebra2 : Algebra (ConcreteBTField r1) (ConcreteBTField r) :=
         ConcreteBTFieldAlgebra (l:=r1) (r:=r) (h_le:=by omega)
       set b := (powerBasisSucc r1) with hb
       rw! (castMode:=.all) [←hb]

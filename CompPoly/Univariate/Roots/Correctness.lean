@@ -3,11 +3,15 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Univariate.Roots.Backend
-import CompPoly.Univariate.Roots.Splitter
-import CompPoly.Univariate.EuclideanAlgorithm
-import CompPoly.Univariate.ToPoly.Impl
+import all CompPoly.Univariate.EuclideanAlgorithm
+import all CompPoly.Univariate.Raw.Context
+import all CompPoly.Univariate.Raw.Modular
+public import CompPoly.Univariate.Roots.Backend
+public import CompPoly.Univariate.Roots.Splitter
+public import CompPoly.Univariate.EuclideanAlgorithm
+public import CompPoly.Univariate.ToPoly.Impl
 
 /-!
 # Finite-Field Root Correctness
@@ -15,6 +19,8 @@ import CompPoly.Univariate.ToPoly.Impl
 Theorem statements and certified context constructors for the executable
 finite-field root backend.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -130,10 +136,12 @@ private theorem Raw.eval_monicNormalize_eq_zero_of_eval_eq_zero {F : Type*}
     {p : CPolynomial.Raw F} {a : F} (hp : p.eval a = 0) :
     (CPolynomial.Raw.monicNormalize p).eval a = 0 := by
   unfold CPolynomial.Raw.monicNormalize
-  by_cases hzero : p.trim = (#[] : CPolynomial.Raw F)
-  · simp [hzero, CPolynomial.Raw.eval, CPolynomial.Raw.eval₂]
-  · simp [hzero]
-    change CPolynomial.Raw.eval a (CPolynomial.Raw.smul p.trim.leadingCoeff⁻¹ p.trim) = 0
+  show CPolynomial.Raw.eval a
+      (if p.trim == (0 : CPolynomial.Raw F) then 0 else p.trim.leadingCoeff⁻¹ • p.trim) = 0
+  split
+  · simp [CPolynomial.Raw.eval, CPolynomial.Raw.eval₂]
+    rfl
+  · change CPolynomial.Raw.eval a (CPolynomial.Raw.smul p.trim.leadingCoeff⁻¹ p.trim) = 0
     rw [Raw.eval_smul, CPolynomial.Raw.eval_trim_eq_eval, hp]
     simp
 
@@ -193,7 +201,8 @@ theorem monicNormalize_root_iff {F : Type*} [Field F] [BEq F] [LawfulBEq F]
     intro h
     apply hp
     apply CPolynomial.ext
-    simpa using h
+    change p.val = (#[] : CPolynomial.Raw F)
+    exact h
   have hsize : 0 < p.val.size := by
     cases hs : p.val.size with
     | zero =>
@@ -243,7 +252,7 @@ theorem toPoly_monicNormalize_dvd_self {F : Type*}
     [Field F] [BEq F] [LawfulBEq F]
     (p : CPolynomial F) :
     (CPolynomial.monicNormalize p).toPoly ∣ p.toPoly := by
-  letI : DecidableEq F := instDecidableEqOfLawfulBEq
+  let : DecidableEq F := instDecidableEqOfLawfulBEq
   rw [CPolynomial.monicNormalize_toPoly_eq_normalize]
   exact (normalize_associated p.toPoly).dvd
 
@@ -263,7 +272,7 @@ theorem toPoly_gcdMonic_dvd_left {F : Type*}
     [Field F] [BEq F] [LawfulBEq F]
     (p q : CPolynomial F) :
     (CPolynomial.gcdMonic p q).toPoly ∣ p.toPoly := by
-  letI : DecidableEq F := instDecidableEqOfLawfulBEq
+  let : DecidableEq F := instDecidableEqOfLawfulBEq
   rw [CPolynomial.gcdMonic_toPoly_eq_normalize_gcd]
   exact (normalize_associated (EuclideanDomain.gcd p.toPoly q.toPoly)).dvd.trans
     (EuclideanDomain.gcd_dvd_left p.toPoly q.toPoly)
@@ -273,7 +282,7 @@ theorem toPoly_gcdMonic_dvd_right {F : Type*}
     [Field F] [BEq F] [LawfulBEq F]
     (p q : CPolynomial F) :
     (CPolynomial.gcdMonic p q).toPoly ∣ q.toPoly := by
-  letI : DecidableEq F := instDecidableEqOfLawfulBEq
+  let : DecidableEq F := instDecidableEqOfLawfulBEq
   rw [CPolynomial.gcdMonic_toPoly_eq_normalize_gcd]
   exact (normalize_associated (EuclideanDomain.gcd p.toPoly q.toPoly)).dvd.trans
     (EuclideanDomain.gcd_dvd_right p.toPoly q.toPoly)
@@ -438,7 +447,6 @@ private theorem linearRootOfFactor?_eq_some_of_candidate {F : Type*}
   have hcond : factor.val.size ≤ 2 ∧ factor.coeff 1 ≠ 0 := h.1
   rw [if_pos]
   · congr
-    change -(factor.coeff 0) / factor.coeff 1 = a
     apply (div_eq_iff hcond.2).2
     rw [neg_eq_iff_add_eq_zero]
     rw [_root_.mul_comm a (factor.coeff 1)]
@@ -805,7 +813,8 @@ theorem finiteFieldRootProductWith_complete {F : Type*}
   by_cases hpempty : p.val = (#[] : CPolynomial.Raw F)
   · have hp0 : p = 0 := by
       apply CPolynomial.ext
-      simpa using hpempty
+      change p.val = (#[] : CPolynomial.Raw F)
+      exact hpempty
     exact (hp hp0).elim
   · simp [hpempty, CPolynomial.trim_eq]
     have hmonicRoot : (CPolynomial.Raw.monicNormalize p.val).eval a = 0 :=
@@ -834,7 +843,8 @@ theorem finiteFieldRootProduct_complete {F : Type*}
   by_cases hpempty : p.val = (#[] : CPolynomial.Raw F)
   · have hp0 : p = 0 := by
       apply CPolynomial.ext
-      simpa using hpempty
+      change p.val = (#[] : CPolynomial.Raw F)
+      exact hpempty
     exact (hp hp0).elim
   · simp [hpempty, CPolynomial.trim_eq]
     have hmonicRoot : (CPolynomial.Raw.monicNormalize p.val).eval a = 0 :=

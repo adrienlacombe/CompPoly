@@ -3,11 +3,14 @@ Copyright (c) 2026 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
-import CompPoly.Univariate.Lagrange
-import CompPoly.Univariate.NTT.Evaluation
-import CompPoly.Univariate.NTT.Inverse
-import CompPoly.Univariate.NTT.Kernel
-import Init.Data.Vector.OfFn
+module
+
+import all CompPoly.Univariate.Basic
+public import CompPoly.Univariate.Lagrange
+public import CompPoly.Univariate.NTT.Evaluation
+public import CompPoly.Univariate.NTT.Inverse
+public import CompPoly.Univariate.NTT.Kernel
+public import Init.Data.Vector.OfFn
 
 /-!
 # NTT and Interpolation
@@ -15,6 +18,8 @@ import Init.Data.Vector.OfFn
 Bridge theorem declarations connecting the NTT specification layer to power-domain
 interpolation.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 namespace CPolynomial
@@ -143,6 +148,9 @@ theorem inverseSpec_interpolatePow_eq [BEq R] [LawfulBEq R]
   have hinterpdeg : q.toPoly.degree < D.n := by
     unfold q CLagrange.interpolatePow
     rw [CLagrange.cinterpolate_eq_interpolate]
+    change (∑ k : D.Idx,
+        Polynomial.C (r.get k) *
+          Lagrange.basis Finset.univ (fun k : D.Idx => D.node k) k).degree < D.n
     simpa [Domain.node] using
       Lagrange.degree_interpolate_lt
         (s := Finset.univ) (v := fun k : D.Idx => D.node k)
@@ -154,6 +162,7 @@ theorem inverseSpec_interpolatePow_eq [BEq R] [LawfulBEq R]
     have hget : r.get k = values.getD k.1 0 := by
       dsimp [r]
       simp [loadNaturalVector, Vector.get]
+      rfl
     rw [← hget]
     simpa [q, Domain.node, omegaUnit, homegaUnit] using h
   have hpoly :
@@ -171,10 +180,8 @@ theorem inverseSpec_interpolatePow_eq [BEq R] [LawfulBEq R]
             exact (CPolynomial.Raw.toImpl_toPoly (R := R) (inverseSpec D values)).symm
     _ = q.toPoly.toImpl := by
             rw [hpoly]
-    _ = q.val.trim := by
-            exact CPolynomial.Raw.toImpl_toPoly (R := R) q.val
     _ = q.val := by
-            exact CPolynomial.Raw.Trim.trim_eq_of_isCanonical q.property
+            exact CPolynomial.toImpl_toPoly_of_canonical q
 
 /-- The inverse NTT implementation interpolates the input values on the NTT domain. -/
 theorem inverseImpl_interpolatePow_eq [BEq R] [LawfulBEq R]

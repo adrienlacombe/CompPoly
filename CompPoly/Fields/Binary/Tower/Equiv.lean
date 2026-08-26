@@ -3,8 +3,9 @@ Copyright (c) 2024 - 2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chung Thai Nguyen, Quang Dao
 -/
+module
 
-import CompPoly.Fields.Binary.Tower.Concrete.Basis
+public import CompPoly.Fields.Binary.Tower.Concrete.Basis
 
 /-!
 # Binary Tower Equivalence
@@ -12,7 +13,8 @@ import CompPoly.Fields.Binary.Tower.Concrete.Basis
 Equivalences between the abstract and concrete binary tower constructions.
 -/
 
-set_option backward.isDefEq.respectTransparency false
+@[expose] public section
+
 namespace ConcreteBinaryTower
 
 open Polynomial
@@ -101,7 +103,7 @@ lemma towerRingHomForwardMap_zero {k : ℕ} :
     rfl
   | succ k ih =>
     unfold towerRingHomForwardMap
-    simp only [BTField.eq_1, Nat.add_eq_zero_iff, one_ne_zero, and_false, ↓reduceDIte,
+    simp only [Nat.add_eq_zero_iff, one_ne_zero, and_false, ↓reduceDIte,
       Nat.add_one_sub_one]
     rw! [←zero_is_0, split_zero]
     simp only [Nat.add_one_sub_one, zero_is_0]
@@ -118,7 +120,7 @@ lemma towerRingHomForwardMap_one {k : ℕ} :
     rfl
   | succ k ih =>
     unfold towerRingHomForwardMap
-    simp only [BTField.eq_1, Nat.add_eq_zero_iff, one_ne_zero, and_false, ↓reduceDIte,
+    simp only [Nat.add_eq_zero_iff, one_ne_zero, and_false, ↓reduceDIte,
       Nat.add_one_sub_one]
     rw! [←one_is_1, split_one]
     simp only [Nat.add_one_sub_one, one_is_1, zero_is_0]
@@ -218,7 +220,7 @@ lemma towerRingHomForwardMap_add_eq (k : ℕ) (x y : ConcreteBTField k) :
         rw [h_map_0]; norm_num
       · simp only [y_one, one_is_1]
         simp only [add_self_cancel, h_map_1]
-        rw [GF_2_one_add_one_eq_zero]
+        rw [show (1 + 1 : BTField 0) = 0 from GF_2_one_add_one_eq_zero]
         rfl
   | succ k ih =>
     unfold towerRingHomForwardMap
@@ -302,7 +304,7 @@ lemma towerRingHomForwardMap_split_eq (k : ℕ) (h_pos : k > 0) (x : ConcreteBTF
       (hi_btf := towerRingHomForwardMap (k:=k-1) (p.1))
       (lo_btf := towerRingHomForwardMap (k:=k-1) (p.2)) := by
   -- This lemma is actually due to the definition of `towerRingHomForwardMap` for `k > 0`
-  simp only [BTField.eq_1]
+  simp only []
   conv_lhs => unfold towerRingHomForwardMap -- not unfold in the rhs
   have h_k_ne_0 : k ≠ 0 := by omega
   set hi := (split (k:=k) (h:=h_pos) x).1 with hhi
@@ -416,42 +418,57 @@ theorem towerEquiv_commutes_left_diff (i d : ℕ) : ∀ r : ConcreteBTField i,
         (towerEquiv i).ringEquiv ((concreteTowerAlgebraMap (l:=i) (r:=i) (h_le:=by omega)) r)
       simp [towerAlgebraMap_id, concreteTowerAlgebraMap_id]
   | succ d ih =>
+      change (towerAlgebraMap (l:=i) (r:=i + d + 1) (h_le:=by omega)) ((towerEquiv i).ringEquiv r) =
+        (towerEquiv (i + d + 1)).ringEquiv
+          ((concreteTowerAlgebraMap (l:=i) (r:=i + d + 1) (h_le:=by omega)) r)
       calc
-        (AlgebraTower.algebraMap i (i + Nat.succ d) (by omega)) ((towerEquiv i).ringEquiv r)
-            = ((AlgebraTower.algebraMap (i + d) (i + d + 1) (by omega)).comp
-                (AlgebraTower.algebraMap i (i + d) (by omega))) ((towerEquiv i).ringEquiv r) := by
-              simpa [Nat.add_assoc] using congrArg (fun f => f ((towerEquiv i).ringEquiv r))
+        (towerAlgebraMap (l:=i) (r:=i + d + 1) (h_le:=by omega))
+            ((towerEquiv i).ringEquiv r)
+            = ((towerAlgebraMap (l:=i + d) (r:=i + d + 1) (h_le:=by omega)).comp
+                (towerAlgebraMap (l:=i) (r:=i + d) (h_le:=by omega)))
+              ((towerEquiv i).ringEquiv r) := by
+              exact congrArg (fun f => f ((towerEquiv i).ringEquiv r))
                 (towerAlgebraMap_succ (l:=i) (r:=i + d) (h_le:=by omega))
-        _ = (AlgebraTower.algebraMap (i + d) (i + d + 1) (by omega))
-              ((AlgebraTower.algebraMap i (i + d) (by omega)) ((towerEquiv i).ringEquiv r)) := by
+        _ = (towerAlgebraMap (l:=i + d) (r:=i + d + 1) (h_le:=by omega))
+              ((towerAlgebraMap (l:=i) (r:=i + d) (h_le:=by omega))
+                ((towerEquiv i).ringEquiv r)) := by
               simp only [RingHom.coe_comp, Function.comp_apply]
-        _ = (AlgebraTower.algebraMap (i + d) (i + d + 1) (by omega))
+        _ = (towerAlgebraMap (l:=i + d) (r:=i + d + 1) (h_le:=by omega))
               ((towerEquiv (i + d)).ringEquiv
-                ((AlgebraTower.algebraMap i (i + d) (by omega)) r)) := by
-              rw [ih]
+                ((concreteTowerAlgebraMap (l:=i) (r:=i + d) (h_le:=by omega)) r)) := by
+              have hih := ih
+              change (towerAlgebraMap (l:=i) (r:=i + d) (h_le:=by omega))
+                  ((towerEquiv i).ringEquiv r) =
+                (towerEquiv (i + d)).ringEquiv
+                  ((concreteTowerAlgebraMap (l:=i) (r:=i + d) (h_le:=by omega))
+                    r) at hih
+              rw [hih]
         _ = (towerEquiv (i + d + 1)).ringEquiv
-              ((AlgebraTower.algebraMap (i + d) (i + d + 1) (by omega))
-                ((AlgebraTower.algebraMap i (i + d) (by omega)) r)) := by
-              simpa using (towerEquiv_commutes_left_succ (k:=i + d)
-                ((AlgebraTower.algebraMap i (i + d) (by omega)) r))
+              ((concreteTowerAlgebraMap (l:=i + d) (r:=i + d + 1) (h_le:=by omega))
+                ((concreteTowerAlgebraMap (l:=i) (r:=i + d) (h_le:=by omega)) r)) := by
+              have hsucc := towerEquiv_commutes_left_succ (k:=i + d)
+                ((concreteTowerAlgebraMap (l:=i) (r:=i + d) (h_le:=by omega)) r)
+              change (towerAlgebraMap (l:=i + d) (r:=i + d + 1) (h_le:=by omega))
+                  ((towerEquiv (i + d)).ringEquiv
+                    ((concreteTowerAlgebraMap (l:=i) (r:=i + d) (h_le:=by omega)) r)) =
+                (towerEquiv (i + d + 1)).ringEquiv
+                  ((concreteTowerAlgebraMap (l:=i + d) (r:=i + d + 1) (h_le:=by omega))
+                    ((concreteTowerAlgebraMap (l:=i) (r:=i + d) (h_le:=by omega)) r)) at hsucc
+              exact hsucc
         _ = (towerEquiv (i + d + 1)).ringEquiv
-              ((AlgebraTower.algebraMap i (i + d + 1) (by omega)) r) := by
-              have hconc : (AlgebraTower.algebraMap (AT:=ConcreteBTField) i (i + d + 1) (by omega))
-                    = (AlgebraTower.algebraMap (AT:=ConcreteBTField) (i + d) (i + d + 1)
-                        (by omega)).comp
-                        (AlgebraTower.algebraMap (AT:=ConcreteBTField) i (i + d) (by omega)) := by
-                simpa [Nat.add_assoc] using
-                  (concreteTowerAlgebraMap_succ (l:=i) (r:=i + d) (h_le:=by omega))
+              ((concreteTowerAlgebraMap (l:=i) (r:=i + d + 1) (h_le:=by omega)) r) := by
+              have hconc : (concreteTowerAlgebraMap (l:=i) (r:=i + d + 1) (h_le:=by omega))
+                    = (concreteTowerAlgebraMap (l:=i + d) (r:=i + d + 1)
+                        (h_le:=by omega)).comp
+                        (concreteTowerAlgebraMap (l:=i) (r:=i + d) (h_le:=by omega)) := by
+                exact concreteTowerAlgebraMap_succ (l:=i) (r:=i + d) (h_le:=by omega)
               have hconc_apply := congrArg (fun f => f r) hconc
               have h_inner :
-                  (AlgebraTower.algebraMap (AT:=ConcreteBTField) (i + d) (i + d + 1) (by omega))
-                      ((AlgebraTower.algebraMap (AT:=ConcreteBTField) i (i + d) (by omega)) r) =
-                    (AlgebraTower.algebraMap (AT:=ConcreteBTField) i (i + d + 1) (by omega)) r := by
+                  (concreteTowerAlgebraMap (l:=i + d) (r:=i + d + 1) (h_le:=by omega))
+                      ((concreteTowerAlgebraMap (l:=i) (r:=i + d) (h_le:=by omega)) r) =
+                    (concreteTowerAlgebraMap (l:=i) (r:=i + d + 1) (h_le:=by omega)) r := by
                 simpa [RingHom.comp_apply] using hconc_apply.symm
               simp [h_inner]
-        _ = (towerEquiv (i + Nat.succ d)).ringEquiv
-              ((AlgebraTower.algebraMap i (i + Nat.succ d) (by omega)) r) := by
-              rfl
 
 theorem towerEquiv_commutes_left (i j : ℕ) (h : i ≤ j) : ∀ r : ConcreteBTField i,
     (AlgebraTower.algebraMap i j h) ((towerEquiv i).ringEquiv r) =
@@ -461,7 +478,7 @@ theorem towerEquiv_commutes_left (i j : ℕ) (h : i ≤ j) : ∀ r : ConcreteBTF
   rw! [h_j_eq]
   exact towerEquiv_commutes_left_diff (i:=i) (d:=d)
 
-noncomputable instance instAlgebraTowerEquiv : AlgebraTowerEquiv
+noncomputable def instAlgebraTowerEquiv : AlgebraTowerEquiv
   (ConcreteBTField) (BTField) where
   toRingEquiv := fun i => (towerEquiv i).ringEquiv
   commutesLeft' := fun i j h r => by

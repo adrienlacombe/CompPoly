@@ -3,9 +3,10 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Univariate.Roots.Enumeration
-import Mathlib.Algebra.Field.ZMod
+public meta import CompPoly.Univariate.Roots.Enumeration
+public meta import Mathlib.Algebra.Field.ZMod
 
 /-!
 # Exhaustive Enumeration Root Tests
@@ -13,6 +14,8 @@ import Mathlib.Algebra.Field.ZMod
 Executable coverage for lazy finite-field enumeration adapters over small
 prime fields.
 -/
+
+public meta section
 
 namespace CompPolyTests
 
@@ -35,8 +38,7 @@ private def f3Elements : Array F3 :=
 
 private theorem f3Elements_complete : ContainsAllFieldElements f3Elements := by
   unfold ContainsAllFieldElements
-  intro a
-  fin_cases a <;> decide
+  decide
 
 private def f3Enumeration : FieldEnumeration F3 :=
   fieldEnumerationOfArray f3Elements f3Elements_complete
@@ -54,8 +56,7 @@ private def f5Elements : Array F5 :=
 
 private theorem f5Elements_complete : ContainsAllFieldElements f5Elements := by
   unfold ContainsAllFieldElements
-  intro a
-  fin_cases a <;> decide
+  decide
 
 private def f5Enumeration : FieldEnumeration F5 :=
   fieldEnumerationOfArray f5Elements f5Elements_complete

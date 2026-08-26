@@ -3,8 +3,9 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.Interpolation.Basic
+public import CompPoly.Bivariate.GuruswamiSudan.Interpolation.Basic
 
 /-!
 # Dense Guruswami-Sudan Interpolation
@@ -20,13 +21,15 @@ an explicit product witness.
     algebraic-geometry codes*][GS99]
 -/
 
+@[expose] public section
+
 namespace CompPoly
 
 namespace GuruswamiSudan
 
 /-- Dense interpolation over an explicitly supplied finite monomial basis. -/
 def denseInterpolateWithBasisAndKernel {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (kernelContext : LinearKernelContext F)
     (basis : Array CBivariate.Monomial)
     (points : Array (Prod F F)) (params : GSInterpParams) :
@@ -42,7 +45,7 @@ When `messageDegree ≤ 1`, `yWeight params = 0`, so weighted degree alone does
 not bound the `Y`-degree. This branch returns an explicit product witness for
 the low-message-degree branch. -/
 def denseInterpolateWithKernel {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (kernelContext : LinearKernelContext F)
     (points : Array (Prod F F)) (params : GSInterpParams) :
     Option (CBivariate F) :=
@@ -54,7 +57,7 @@ def denseInterpolateWithKernel {F : Type*}
 
 /-- Dense interpolation using the built-in Gaussian-elimination kernel backend. -/
 def denseInterpolate {F : Type*}
-    [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+    [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
     (points : Array (Prod F F)) (params : GSInterpParams) :
     Option (CBivariate F) :=
   denseInterpolateWithKernel (denseLinearKernelContext F) points params

@@ -3,19 +3,24 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Gregor Mitscha-Baude, Derek Sorensen
 -/
-import Mathlib.Algebra.Polynomial.Inductions
-import Mathlib.Algebra.Ring.TransferInstance
-import Mathlib.Algebra.Tropical.Basic
-import Mathlib.RingTheory.Polynomial.Basic
-import CompPoly.Data.Array.Lemmas
-import CompPoly.Univariate.Basic
-import CompPoly.Univariate.Linear
+module
+
+import all CompPoly.Univariate.Basic
+public import Mathlib.Algebra.Polynomial.Inductions
+public import Mathlib.Algebra.Ring.TransferInstance
+public import Mathlib.Algebra.Tropical.Basic
+public import Mathlib.RingTheory.Polynomial.Basic
+public import CompPoly.Data.Array.Lemmas
+public import CompPoly.Univariate.Basic
+public import CompPoly.Univariate.Linear
 
 /-!
 # Computable Univariate To `Polynomial`
 
 Conversions between computable univariate polynomials and mathlib `Polynomial`.
 -/
+
+public section
 
 open Polynomial
 
@@ -43,16 +48,16 @@ noncomputable def Raw.toPoly [Semiring R] (p : CPolynomial.Raw R) : Polynomial R
 
 /-- Alternative definition of `toPoly` using `Finsupp`; currently unused. -/
 noncomputable def Raw.toPoly' [Semiring R] (p : CPolynomial.Raw R) : Polynomial R :=
-  Polynomial.ofFinsupp (Finsupp.onFinset (Finset.range p.size) p.coeff (by
+  Polynomial.ofFinsupp (AddMonoidAlgebra.ofCoeff (Finsupp.onFinset (Finset.range p.size) p.coeff (by
     intro n hn
     rw [Finset.mem_range]
     by_contra! h
     have h' : p.coeff n = 0 := by simp [h]
     contradiction
-  ))
+  )))
 
 /-- Convert a canonical polynomial to a (mathlib) `Polynomial`. -/
-noncomputable def toPoly [Zero R] [Semiring R] (p : CPolynomial R) : Polynomial R := p.val.toPoly
+noncomputable def toPoly [Semiring R] (p : CPolynomial R) : Polynomial R := p.val.toPoly
 
 end ToPolyDefs
 
@@ -92,8 +97,7 @@ lemma coeff_toPoly {p : CPolynomial.Raw Q} {n : ℕ} : p.toPoly.coeff n = p.coef
     rw [Raw.coeff, Array.getD_eq_getD_getElem?, Array.getElem?_eq_none hn, Option.getD_none]
 
   apply Array.foldl_induction motive
-  · change motive 0 0
-    simp [motive]
+  · simp [motive]
 
   change ∀ (i : Fin p.zipIdx.size) acc, motive i acc → motive (i + 1) (f acc p.zipIdx[i])
   unfold motive f
@@ -195,7 +199,7 @@ theorem isCanonical_toImpl (p : R[X]) : IsCanonical p.toImpl := by
   · simpa [h] using (Trim.isCanonical_empty (R := R))
   · intro hp
     have hlast : p.toImpl.getLast hp = p.leadingCoeff := by
-      simpa using (getLast_toImpl (Q := R) (p := p) h_nz)
+      simpa [Array.getLast] using (getLast_toImpl (Q := R) (p := p) h_nz)
     rw [hlast]
     exact Polynomial.leadingCoeff_ne_zero.mpr h_nz
 
@@ -205,6 +209,13 @@ theorem trim_toImpl [LawfulBEq R] (p : R[X]) : p.toImpl.trim = p.toImpl := by
   exact Trim.trim_eq_of_isCanonical (isCanonical_toImpl p)
 
 end Raw
+
+omit [BEq R] in
+/-- Building a canonical polynomial from `toImpl` and converting it back yields the
+original mathlib polynomial. -/
+theorem toPoly_mk_toImpl (p : R[X]) :
+    CPolynomial.toPoly ⟨p.toImpl, Raw.isCanonical_toImpl p⟩ = p := by
+  exact Raw.toPoly_toImpl
 
 /-- `ofArray` preserves the raw polynomial's `toPoly` image. -/
 theorem ofArray_toPoly [LawfulBEq R] (p : CPolynomial.Raw R) :

@@ -3,10 +3,12 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Derek Sorensen
 -/
+module
 
-import CompPoly.Bivariate.Basic
-import CompPoly.Univariate.ToPoly.Impl
-import Mathlib.Algebra.Polynomial.Bivariate
+import all CompPoly.Univariate.ToPoly.Impl
+public import CompPoly.Bivariate.Basic
+public import CompPoly.Univariate.ToPoly.Impl
+public import Mathlib.Algebra.Polynomial.Bivariate
 
 /-!
 # Equivalence with Mathlib Bivariate Polynomials
@@ -23,6 +25,8 @@ Main results:
 - ring equivalence: `ringEquiv`
 - API correctness lemmas for evaluation, coefficients, support, and degrees
 -/
+
+@[expose] public section
 
 open Polynomial
 open scoped Polynomial.Bivariate
@@ -227,7 +231,6 @@ theorem toPoly_eq_map {R : Type*} [BEq R] [LawfulBEq R] [Nontrivial R] [Semiring
       intro n
       split_ifs <;> simp_all +decide [ CPolynomial.toPoly ]
       · erw [ CPolynomial.Raw.coeff_toPoly ]
-        unfold CPolynomial.ringEquiv
         aesop
       · rw [ CPolynomial.Raw.coeff_toPoly ]
         simp +decide [ CPolynomial.support, * ] at *
@@ -313,8 +316,6 @@ lemma ofPoly_zero {R : Type*} [BEq R] [LawfulBEq R] [Nontrivial R] [Semiring R] 
     ofPoly (0 : R[X][Y]) = 0 := by
       unfold CBivariate.ofPoly
       simp +decide [ Polynomial.support ]
-      erw [Finsupp.support_zero]
-      exact Finset.sum_empty
 
 /-- Ring hom from computable bivariates to Mathlib bivariates. -/
 noncomputable def toPolyRingHom
@@ -480,25 +481,11 @@ theorem coeff_toPoly_Y {R : Type*} [BEq R] [LawfulBEq R] [Nontrivial R] [Semirin
 theorem natDegreeX_toPoly {R : Type*} [BEq R] [LawfulBEq R] [Nontrivial R] [Semiring R]
     (f : CBivariate R) :
     (toPoly f).support.sup (fun j ↦ ((toPoly f).coeff j).natDegree) = f.natDegreeX := by
-      convert (Finset.sup_congr ?_ ?_)
-      · ext
-        simp +decide [ coeff_toPoly_Y ]
-        rw [ CPolynomial.support ]
-        by_cases h : ‹_› < f.val.size <;> simp_all +decide [ Finset.mem_filter, Finset.mem_range ]
-        · -- Since `toPoly` is injective, if `toPoly (f.coeff j) = 0`, then `f.coeff j = 0`.
-          have h_inj : ∀ (p : CPolynomial R), p.toPoly = 0 ↔ p = 0 := by
-            intro p
-            exact ⟨fun hp ↦ by
-              apply Subtype.ext
-              apply_fun (fun p ↦ p.toImpl) at hp
-              convert hp using 1
-              exact Eq.symm (CPolynomial.toImpl_toPoly_of_canonical p),
-              fun hp ↦ by aesop⟩
-          aesop
-        · exact (CPolynomial.toPoly_eq_zero_iff 0).mpr rfl
-      · intro j hj
-        rw [ coeff_toPoly_Y ]
-        exact Eq.symm (CPolynomial.natDegree_toPoly (f.val.coeff j))
+  rw [support_toPoly_outer, CBivariate.supportY, CBivariate.natDegreeX]
+  refine Finset.sup_congr rfl ?_
+  intro j hj
+  rw [coeff_toPoly_Y]
+  exact Eq.symm (CPolynomial.natDegree_toPoly (f.val.coeff j))
 
 /--
 `CC` corresponds to the nested constant polynomial in `R[X][Y]`.
@@ -508,8 +495,6 @@ theorem CC_toPoly {R : Type*} [BEq R] [LawfulBEq R] [Nontrivial R] [Semiring R] 
   rw [ toPoly_eq_map ]
   unfold CBivariate.CC
   simp [ CPolynomial.C_toPoly ]
-  change (CPolynomial.C r).toPoly = Polynomial.C r
-  exact CPolynomial.C_toPoly r
 
 /--
 `X` (inner variable) corresponds to `Polynomial.C Polynomial.X` in `R[X][Y]`.
@@ -518,7 +503,6 @@ theorem X_toPoly {R : Type*} [BEq R] [LawfulBEq R] [Nontrivial R] [Semiring R] :
     toPoly (X (R := R)) = Polynomial.C Polynomial.X := by
   rw [ toPoly_eq_map ]
   simp [ CBivariate.X, CPolynomial.C_toPoly ]
-  change (CPolynomial.X : CPolynomial R).toPoly = Polynomial.X
   exact CPolynomial.X_toPoly
 
 /--
@@ -526,8 +510,8 @@ theorem X_toPoly {R : Type*} [BEq R] [LawfulBEq R] [Nontrivial R] [Semiring R] :
 -/
 theorem Y_toPoly {R : Type*} [BEq R] [LawfulBEq R] [Nontrivial R] [Semiring R] [DecidableEq R] :
     toPoly (CBivariate.Y (R := R)) = (Polynomial.X : Polynomial (Polynomial R)) := by
-  simpa [CBivariate.Y, CPolynomial.C_toPoly] using
-    (toPoly_monomial (R := R) 1 (CPolynomial.C 1))
+  rw [CBivariate.Y, toPoly_monomial]
+  simp [CPolynomial.C_toPoly, Polynomial.monomial_one_one_eq_X]
 
 /--
 `monomialXY n m c` corresponds to `Y^m` with inner coefficient `X^n * c`.
@@ -537,8 +521,8 @@ theorem monomialXY_toPoly {R : Type*} [BEq R] [LawfulBEq R] [Nontrivial R] [Semi
     toPoly (monomialXY (R := R) n m c) = Polynomial.monomial m (Polynomial.monomial n c) := by
   unfold CBivariate.monomialXY
   rw [ toPoly_monomial ]
-  congr
-  simpa using CPolynomial.monomial_toPoly (R := R) n c
+  exact congrArg (fun p : Polynomial R => Polynomial.monomial m p)
+    (CPolynomial.monomial_toPoly (R := R) n c)
 
 /--
 `supportX` corresponds to the union of inner supports of outer coefficients.
@@ -586,13 +570,21 @@ theorem evalX_toPoly_coeff {R : Type*} [BEq R] [LawfulBEq R] [Nontrivial R] [Sem
         ∑ i ∈ f.support, if i = j then CPolynomial.eval a (f.val.coeff i) else 0 := by
     simp +decide [CBivariate.toPoly, Polynomial.coeff_monomial]
     split_ifs <;> simp +decide [*, CPolynomial.eval_toPoly]
-  convert h₁ (CPolynomial.support f) (fun i => f.val.coeff i) using 1
-  convert h₂ using 1
-  exact Finset.sum_congr rfl fun i hi => by
-    have (n : ℕ) (c : R) : (CPolynomial.monomial n c).toPoly = Polynomial.monomial n c := by
-        apply CPolynomial.monomial_toPoly
-    rw [this]
-    simp [Polynomial.coeff_monomial]
+  rw [show ((evalX (R := R) a f).toPoly).coeff j =
+      ∑ i ∈ CPolynomial.support f,
+        (CPolynomial.monomial i (CPolynomial.eval a (f.val.coeff i))).toPoly.coeff j by
+    unfold evalX
+    simpa using h₁ (CPolynomial.support f) (fun i => f.val.coeff i)]
+  rw [h₂]
+  refine Finset.sum_congr rfl ?_
+  intro i hi
+  calc
+    (CPolynomial.monomial i (CPolynomial.eval a (f.val.coeff i))).toPoly.coeff j =
+        (Polynomial.monomial i (CPolynomial.eval a (f.val.coeff i))).coeff j := by
+          exact congrArg (fun p : Polynomial R => p.coeff j)
+            (CPolynomial.monomial_toPoly (R := R) i (CPolynomial.eval a (f.val.coeff i)))
+    _ = if i = j then CPolynomial.eval a (f.val.coeff i) else 0 := by
+          simp [Polynomial.coeff_monomial]
 
 /--
 `evalX` is compatible with full bivariate evaluation when `a` and `y` commute.
@@ -657,12 +649,13 @@ theorem eval_eval_horner_x_then_y_eq_eval_eval {R : Type*}
     dsimp [coeffEval]
     congr
     ext c acc
-    simp [CPolynomial.eval_horner_eq_eval, CPolynomial.eval_toPoly, CPolynomial.ringEquiv]
+    simp [CPolynomial.eval_horner_eq_eval, CPolynomial.eval_toPoly,
+      CPolynomial.ringEquiv_apply]
   have h_evalX_map :
       (evalX (R := R) x p).toPoly = (CPolynomial.toPoly p).map coeffEval := by
     ext j
     rw [evalX_toPoly_coeff]
-    simp [toPoly_coeff, coeffEval, CPolynomial.ringEquiv]
+    simp [toPoly_coeff, coeffEval, CPolynomial.ringEquiv_apply]
     rw [← CPolynomial.coeff_toPoly (p := p) (i := j)]
     simp [CPolynomial.coeff, CPolynomial.Raw.coeff]
   calc
@@ -829,8 +822,8 @@ theorem swap_toPoly_coeff {R : Type*} [BEq R] [LawfulBEq R] [Nontrivial R] [Semi
         by_contra h₁
         exact h (by simpa [CBivariate.supportY] using (CPolynomial.mem_support_iff f i).2 h₁)
       have h₂ : (f.val.coeff i).coeff j = 0 := by
-        simpa [CPolynomial.coeff] using
-          congrArg (fun p : CPolynomial R => CPolynomial.coeff p j) h₁
+        have hcoeff := congrArg (fun p : CPolynomial R => CPolynomial.coeff p j) h₁
+        exact hcoeff.trans (CPolynomial.coeff_zero (R := R) j)
       simpa [CPolynomial.coeff] using Eq.symm h₂
     · intro b hb
       have h₁ : i ≠ b := by

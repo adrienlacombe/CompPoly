@@ -3,19 +3,22 @@ Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chung Thai Nguyen, Quang Dao
 -/
+module
 
-import CompPoly.Data.MvPolynomial.Notation
-import Mathlib.Algebra.Lie.OfAssociative
-import Mathlib.Algebra.Order.Star.Basic
-import Mathlib.LinearAlgebra.FiniteDimensional.Defs
-import Mathlib.LinearAlgebra.FreeModule.StrongRankCondition
-import Mathlib.Order.CompletePartialOrder
-import Mathlib.RingTheory.Henselian
-import Mathlib.LinearAlgebra.StdBasis
+public import CompPoly.Data.MvPolynomial.Notation
+public import Mathlib.Algebra.Lie.OfAssociative
+public import Mathlib.Algebra.Order.Star.Basic
+public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
+public import Mathlib.LinearAlgebra.FreeModule.StrongRankCondition
+public import Mathlib.Order.CompletePartialOrder
+public import Mathlib.RingTheory.Henselian
+public import Mathlib.LinearAlgebra.StdBasis
 
 /-!
 # Monomial basis for algebra extensions
 -/
+
+@[expose] public section
 
 namespace Polynomial
 
@@ -127,8 +130,8 @@ theorem finrank_degreeLT_n (n : ℕ) : Module.finrank L (L⦃< n⦄[X]) = n := b
   rw [Module.finrank_eq_card_basis monomial_basis]
   rw [Fintype.card_fin]
 
-instance finiteDimensional_degreeLT {n : ℕ} (h_n_pos : 0 < n) :
-  FiniteDimensional L L⦃< n⦄[X] := by
+theorem finiteDimensional_degreeLT {n : ℕ} (h_n_pos : 0 < n) :
+    FiniteDimensional L L⦃< n⦄[X] := by
   have h : 0 < Module.finrank L (L⦃< n⦄[X]) := by
     rw [finrank_degreeLT_n n]
     omega

@@ -3,14 +3,16 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Dimitris Mitsios
 -/
+module
 
-import CompPoly.Bivariate.Basic
-import CompPoly.Bivariate.ToPoly
+import all CompPoly.Bivariate.ToPoly
+public import CompPoly.Bivariate.Basic
+public import CompPoly.Bivariate.ToPoly
 
-import Mathlib.Data.List.GetD
-import Mathlib.Data.List.Range
-import Mathlib.Algebra.Polynomial.Coeff
-import Mathlib.Algebra.Polynomial.Degree.Operations
+public import Mathlib.Data.List.GetD
+public import Mathlib.Data.List.Range
+public import Mathlib.Algebra.Polynomial.Coeff
+public import Mathlib.Algebra.Polynomial.Degree.Operations
 /-!
 # Factorisation of Computable Bivariate Polynomials
 
@@ -26,6 +28,8 @@ arbitrary monic divisor in `Y` is available generically through
 `CPolynomial.divByMonic` / `CPolynomial.modByMonic` over the coefficient ring
 `CPolynomial R` (see `CPolynomial.modByMonic_add_mul_divByMonic`).
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -383,12 +387,12 @@ private theorem divByLinearY_divX_quot_coeff [CommRing R] [BEq R] [LawfulBEq R]
       CPolynomial.coeff ((divByLinearY (CPolynomial.divX Q) f).1) j
           = CPolynomial.coeff ((divByLinearY (0 : CBivariate R) f).1) j := by
               rw [divX_zero_of_natDegreeY_zero (Q := Q) h0]
-              rfl
       _ = 0 := by
-            simpa using congrArg (fun p : CBivariate R => CPolynomial.coeff p j) hzeroquot
+            have hcoeff := congrArg (fun p : CBivariate R => CPolynomial.coeff p j) hzeroquot
+            exact hcoeff.trans (CPolynomial.coeff_zero (R := CPolynomial R) j)
       _ = CPolynomial.coeff ((divByLinearY Q f).1) (j + 1) := by
             rw [divByLinearY_quot_of_natDegreeY_zero (Q := Q) (f := f) h0]
-            simpa using (CPolynomial.coeff_zero (R := CPolynomial R) (i := j + 1)).symm
+            exact (CPolynomial.coeff_zero (R := CPolynomial R) (i := j + 1)).symm
   · by_cases h1 : natDegreeY Q = 1
     · have hconstquot :
           (divByLinearY (CPolynomial.C (CPolynomial.coeff Q 1) : CBivariate R) f).1 = 0 := by
@@ -400,7 +404,8 @@ private theorem divByLinearY_divX_quot_coeff [CommRing R] [BEq R] [LawfulBEq R]
                 ((divByLinearY (CPolynomial.C (CPolynomial.coeff Q 1) : CBivariate R) f).1) j := by
                 rw [divX_eq_C_coeff_one_of_natDegreeY_one (Q := Q) h1]
         _ = 0 := by
-              simpa using congrArg (fun p : CBivariate R => CPolynomial.coeff p j) hconstquot
+              have hcoeff := congrArg (fun p : CBivariate R => CPolynomial.coeff p j) hconstquot
+              exact hcoeff.trans (CPolynomial.coeff_zero (R := CPolynomial R) j)
         _ = CPolynomial.coeff ((divByLinearY Q f).1) (j + 1) := by
               rw [divByLinearY_quot_of_natDegreeY_one (Q := Q) (f := f) h1]
               simpa [Nat.succ_ne_zero] using
@@ -451,7 +456,7 @@ private theorem divByLinearY_divX_rem [CommRing R] [BEq R] [LawfulBEq R]
   · rw [divX_zero_of_natDegreeY_zero Q h0, divByLinearY_quot_of_natDegreeY_zero Q f h0]
     have hrem0 : (divByLinearY (0 : CBivariate R) f).2 = (0 : CPolynomial R) := by
       exact congrArg Prod.snd (divByLinearY_zero (R := R) (f := f))
-    simpa [CPolynomial.coeff_zero] using hrem0
+    exact hrem0.trans (CPolynomial.coeff_zero (R := CPolynomial R) 0).symm
   · by_cases h1 : natDegreeY Q = 1
     · rw [divX_eq_C_coeff_one_of_natDegreeY_one Q h1]
       have hrem1 :

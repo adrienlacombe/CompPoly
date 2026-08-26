@@ -3,17 +3,20 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.Interpolation.LeeOSullivan.Correctness.Normalization
-import CompPoly.Bivariate.GuruswamiSudan.Interpolation.LeeOSullivan.Correctness.Rows
-import CompPoly.Bivariate.GuruswamiSudan.Interpolation.LeeOSullivan.Correctness.Selection
-import CompPoly.LinearAlgebra.PolynomialMatrix.MuldersStorjohannCorrectness
+public import CompPoly.Bivariate.GuruswamiSudan.Interpolation.LeeOSullivan.Correctness.Normalization
+public import CompPoly.Bivariate.GuruswamiSudan.Interpolation.LeeOSullivan.Correctness.Rows
+public import CompPoly.Bivariate.GuruswamiSudan.Interpolation.LeeOSullivan.Correctness.Selection
+public import CompPoly.LinearAlgebra.PolynomialMatrix.MuldersStorjohannCorrectness
 
 /-!
 # Lee-O'Sullivan Interpolation Soundness
 
 Soundness for the executable Lee-O'Sullivan interpolation operation.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -23,7 +26,7 @@ namespace LeeOSullivan
 
 open PolynomialMatrix
 
-variable {F : Type*} [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+variable {F : Type*} [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
 
 /-- Soundness for the executable Lee-O'Sullivan interpolation operation. -/
 theorem leeOSullivanInterpolate_sound

@@ -3,11 +3,12 @@ Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chung Thai Nguyen, Quang Dao
 -/
+module
 
-import CompPoly.Data.Nat.Bitwise
-import Mathlib.Algebra.Lie.OfAssociative
-import Mathlib.FieldTheory.Finite.Basic
-import Mathlib.RingTheory.Henselian
+public import CompPoly.Data.Nat.Bitwise
+public import Mathlib.Algebra.Lie.OfAssociative
+public import Mathlib.FieldTheory.Finite.Basic
+public import Mathlib.RingTheory.Henselian
 
 /-!
 # Frobenius polynomial identities
@@ -45,20 +46,23 @@ identities, and divisibility conditions for irreducible polynomials.
 - potentially generalize the Frobenius theorems to generic algebras?
 -/
 
+@[expose] public section
+
 variable {Fq : Type*} [Field Fq] [Fintype Fq]
 
-instance instExpCharOfAlgebra {K : Type*} [Field K] [Algebra Fq K]
-  {h_ringChar_Fq_pos : (ringChar Fq) ≠ 0} : ExpChar K (ringChar Fq) := by
+omit [Fintype Fq] in
+theorem instExpCharOfAlgebra {K : Type*} [Field K] [Algebra Fq K]
+    {h_ringChar_Fq_pos : (ringChar Fq) ≠ 0} : ExpChar K (ringChar Fq) := by
   let p := ringChar Fq
-  letI charP_Fq_p: CharP Fq p := ringChar.charP Fq
-  haveI : CharP K p := by
+  let charP_Fq_p: CharP Fq p := ringChar.charP Fq
+  have : CharP K p := by
     have h_inj : Function.Injective (algebraMap Fq K) :=
       RingHom.injective (algebraMap Fq K)
     exact (RingHom.charP_iff (A := K) (f := algebraMap Fq K) (H := h_inj) p).mp charP_Fq_p
   have h_ringExpChar_K : ringExpChar K = p := by
     rw [ringExpChar, ringChar.eq K p]; simp only [sup_eq_left];
     exact Nat.one_le_iff_ne_zero.mpr h_ringChar_Fq_pos
-  letI inst_expChar_K_p : ExpChar K p := ringExpChar.of_eq h_ringExpChar_K
+  let inst_expChar_K_p : ExpChar K p := ringExpChar.of_eq h_ringExpChar_K
   exact inst_expChar_K_p
 
 namespace Polynomial
@@ -202,7 +206,7 @@ theorem frobenius_identity_in_ground_field
   let p := ringChar Fq
   obtain ⟨n, hp, hn⟩ := FiniteField.card Fq p
   rw [hn]
-  haveI : CharP Fq[X] p := Polynomial.charP
+  have : CharP Fq[X] p := Polynomial.charP
   exact add_pow_expChar_pow f g p ↑n
 
 variable {L : Type*} [CommRing L] [Algebra Fq L] [Nontrivial L]
@@ -378,7 +382,7 @@ theorem irreducible_dvd_X_pow_card_pow_sub_X (p : Fq[X]) (hp_irr : Irreducible p
 
   -- 1. Construct the field extension K = Fq[X]/(p)
   let K := AdjoinRoot p
-  letI : Fintype K := by
+  let : Fintype K := by
     dsimp only [K]
     have hp_ne_zero : p ≠ 0 := Irreducible.ne_zero hp_irr
     let pb := AdjoinRoot.powerBasis hp_ne_zero
@@ -387,7 +391,7 @@ theorem irreducible_dvd_X_pow_card_pow_sub_X (p : Fq[X]) (hp_irr : Irreducible p
       have : Module.finrank Fq (AdjoinRoot p) = pb.dim := PowerBasis.finrank pb
       exact Finite.of_equiv (Fin pb.dim →₀ Fq) (pb.basis.repr.toEquiv.symm)
     exact Fintype.ofFinite (AdjoinRoot p)
-  haveI : Fact (Irreducible p) := ⟨hp_irr⟩
+  have : Fact (Irreducible p) := ⟨hp_irr⟩
 
   -- 2. The size of K is q^d
   have h_card_K : Fintype.card K = q ^ d := by
@@ -429,9 +433,9 @@ theorem degree_dvd_of_irreducible_dvd_X_pow_card_pow_sub_X
 
   -- 1. Construct extension K
   let K := AdjoinRoot p
-  haveI : Fact (Irreducible p) := ⟨hp_irr⟩
+  have : Fact (Irreducible p) := ⟨hp_irr⟩
   -- Establish that K is a Fintype (needed for group order arguments)
-  letI : Fintype K := by
+  let : Fintype K := by
     dsimp only [K]
     have hp_ne_zero : p ≠ 0 := Irreducible.ne_zero hp_irr
     let pb := AdjoinRoot.powerBasis hp_ne_zero
@@ -462,7 +466,7 @@ theorem degree_dvd_of_irreducible_dvd_X_pow_card_pow_sub_X
     induction x using AdjoinRoot.induction_on with
     | ih f =>
       rw [← AdjoinRoot.aeval_eq f]
-      letI : ExpChar K (ringChar Fq) := by
+      let : ExpChar K (ringChar Fq) := by
         apply instExpCharOfAlgebra (h_ringChar_Fq_pos := by
           exact CharP.ringChar_ne_zero_of_finite Fq)
       have h_iterated := aeval_pow_card_pow_eq_aeval_pow_card_pow (Fq := Fq) (K := K) f (x := α) n
@@ -480,7 +484,6 @@ theorem degree_dvd_of_irreducible_dvd_X_pow_card_pow_sub_X
       rw [←h_mul_right_inj, mul_comm, ←pow_succ, Nat.sub_one_add_one (h := by
         exact Ne.symm (NeZero.ne' (q ^ n)))]
       simp only [mul_one]
-      simp only at h_u_pow
       rw [←Units.val_pow_eq_pow_val] at h_u_pow
       exact Units.ext h_u_pow
     have h_exponent_dvd : Monoid.exponent Kˣ ∣ q ^ n - 1 :=

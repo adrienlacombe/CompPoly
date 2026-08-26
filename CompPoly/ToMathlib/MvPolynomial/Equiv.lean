@@ -3,15 +3,18 @@ Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chung Thai Nguyen, Quang Dao
 -/
+module
 
-import Mathlib.Algebra.MvPolynomial.Equiv
-import CompPoly.ToMathlib.Finsupp.Fin
+public import Mathlib.Algebra.MvPolynomial.Equiv
+public import CompPoly.ToMathlib.Finsupp.Fin
 
 /-!
 # MvPolynomial Equiv
 
 Equivalences for multivariable polynomials, including `finSuccEquivNth`.
 -/
+
+@[expose] public section
 
 namespace MvPolynomial
 
@@ -71,6 +74,7 @@ theorem finSuccEquivNth_X_above {i : Fin n} (h : p < i.succ) :
 theorem finSuccEquivNth_X_below {i : Fin n} (h : i.castSucc < p) :
     finSuccEquivNth R p (X i.castSucc) = Polynomial.C (X i) := by
   simp [finSuccEquivNth_apply, Fin.insertNth_apply_below h _ _]
+  exact eq_rec_constant _ _
 
 /-- The coefficient of `m` in the `i`-th coefficient of `finSuccEquivNth R p f` equals the
     coefficient of `m.insertNth p i` in `f`. -/
@@ -84,8 +88,9 @@ theorem finSuccEquivNth_coeff_coeff (m : Fin n →₀ ℕ) (f : MvPolynomial (Fi
       ← map_prod, ← RingHom.map_pow]
     rw [← mul_boole, mul_comm (Polynomial.X ^ u p), Polynomial.coeff_C_mul_X_pow]; congr 1
     obtain rfl | hjmi := eq_or_ne u (m.insertNth p i)
-    · simpa only [insertNth_apply_same, if_pos rfl, insertNth_apply_succAbove, monomial_eq, C_1,
-        one_mul, prod_pow] using coeff_monomial m m (1 : R)
+    · simpa only [insertNth_apply_same, if_pos rfl, if_true,
+        insertNth_apply_succAbove, monomial_eq, C_1, one_mul, prod_pow] using
+        coeff_monomial m m (1 : R)
     · simp only [hjmi, if_false]
       obtain hij | rfl := ne_or_eq i (u p)
       · simp only [hij, if_false, coeff_zero]
@@ -149,16 +154,13 @@ variable. -/
 theorem support_finSuccEquivNth (f : MvPolynomial (Fin (n + 1)) R) :
     (finSuccEquivNth R p f).support = Finset.image (fun m : Fin (n + 1) →₀ ℕ => m p) f.support := by
   ext i
-  rw [Polynomial.mem_support_iff, Finset.mem_image, Finsupp.ne_iff]
+  simp only [Polynomial.mem_support_iff, ne_eq, MvPolynomial.ext_iff, coeff_zero, not_forall,
+    Finset.mem_image, mem_support_iff, finSuccEquivNth_coeff_coeff]
   constructor
   · rintro ⟨m, hm⟩
-    refine ⟨m.insertNth p i, ?_, insertNth_apply_same _ _ _⟩
-    rw [← support_coeff_finSuccEquivNth]
-    simpa using hm
+    exact ⟨m.insertNth p i, hm, insertNth_apply_same _ _ _⟩
   · rintro ⟨m, h, rfl⟩
-    refine ⟨m.removeNth p, ?_⟩
-    rwa [← coeff, zero_apply, ← mem_support_iff, support_coeff_finSuccEquivNth,
-      insertNth_self_removeNth]
+    exact ⟨m.removeNth p, by simpa using h⟩
 
 theorem mem_support_finSuccEquivNth {f : MvPolynomial (Fin (n + 1)) R} {x} :
     x ∈ (finSuccEquivNth R p f).support ↔ x ∈ (fun m : Fin (n + 1) →₀ _ ↦ m p) '' f.support := by

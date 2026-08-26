@@ -3,15 +3,16 @@ Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chung Thai Nguyen, Quang Dao, Derek Sorensen, Dimitris Mitsios
 -/
+module
 
-import Mathlib.FieldTheory.Finite.Basic
-import Mathlib.RingTheory.Polynomial.Basic
-import Mathlib.RingTheory.AdjoinRoot
-import Mathlib.Algebra.Polynomial.FieldDivision
-import CompPoly.Data.Polynomial.Frobenius
-import Mathlib.Algebra.EuclideanDomain.Basic
-import CompPoly.Data.RingTheory.CanonicalEuclideanDomain
-import Mathlib.Tactic.DepRewrite
+public import Mathlib.FieldTheory.Finite.Basic
+public import Mathlib.RingTheory.Polynomial.Basic
+public import Mathlib.RingTheory.AdjoinRoot
+public import Mathlib.Algebra.Polynomial.FieldDivision
+public import CompPoly.Data.Polynomial.Frobenius
+public import Mathlib.Algebra.EuclideanDomain.Basic
+public import CompPoly.Data.RingTheory.CanonicalEuclideanDomain
+public import Mathlib.Tactic.DepRewrite
 
 /-! # Common Utilities for Binary Fields
 
@@ -33,6 +34,8 @@ direct GF(2^128) implementation (`BF128Ghash/`).
 - `toPoly_xor`: `toPoly (a ^^^ b) = toPoly a + toPoly b`
 - `toPoly_clMul`: `toPoly (clMul a b) = toPoly a * toPoly b`
 -/
+
+@[expose] public section
 
 /-! ## Section 1: ZMod 2 Polynomial Lemmas -/
 
@@ -118,7 +121,7 @@ lemma ZMod2Poly.frobenius (a b : Polynomial (ZMod 2)) : (a + b) ^ 2 = a ^ 2 + b 
   change (a + b) ^ (Fintype.card (ZMod 2))
     = a ^ (Fintype.card (ZMod 2)) + b ^ (Fintype.card (ZMod 2))
   have hRingCharZMod2 : ringChar (ZMod 2) = 2 := by exact ZMod.ringChar_zmod_n 2
-  letI : Fact (Nat.Prime (ringChar (ZMod 2))) := by
+  let : Fact (Nat.Prime (ringChar (ZMod 2))) := by
     rw [hRingCharZMod2]
     exact Nat.fact_prime_two
   rw [frobenius_identity_in_algebra (Fq := ZMod 2) (f := a) (g := b)]
@@ -130,7 +133,7 @@ Uses the fact that EuclideanDomain provides a GCDMonoid instance, which has gcd_
 -/
 lemma ZMod2Poly.euclidean_gcd_comm (a b : Polynomial (ZMod 2)) :
     EuclideanDomain.gcd a b = EuclideanDomain.gcd b a := by
-  letI : GCDMonoid (Polynomial (ZMod 2)) := by apply EuclideanDomain.gcdMonoid
+  let : GCDMonoid (Polynomial (ZMod 2)) := by apply EuclideanDomain.gcdMonoid
   have h_assoc := gcd_comm' a b
   apply eq_of_associated_ZMod2
   exact h_assoc
@@ -589,7 +592,6 @@ lemma toPoly_128_extend_256 (a : B128) :
   have h_testBit_false : (BitVec.toNat a).testBit (↑i + 128) = false :=
     Nat.testBit_lt_two_pow h_toNat_lt
   simp only [h_testBit_false, Bool.false_eq_true, ↓reduceIte, add_zero]
-  rfl
 
 -- Lemma: Left Shift corresponds to Multiplication by X^k
 theorem BitVec_getLsb_eq_false_of_toNat_lt_two_pow {w d : ℕ} (a : BitVec w) (ha : a.toNat < 2 ^ d)

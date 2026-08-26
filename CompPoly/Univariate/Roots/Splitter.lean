@@ -3,15 +3,19 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Univariate.Raw.Modular
-import CompPoly.Univariate.Roots.Context
+import all CompPoly.Univariate.Basic
+public import CompPoly.Univariate.Raw.Modular
+public import CompPoly.Univariate.Roots.Context
 
 /-!
 # Linear-Factor Splitter Helpers
 
 Shared executable helpers for finite-field linear-factor splitters.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 

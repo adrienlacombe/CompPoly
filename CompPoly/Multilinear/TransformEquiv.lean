@@ -3,7 +3,9 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Chung Thai Nguyen, Natalie Klaus
 -/
-import CompPoly.Multilinear.Basic
+module
+
+public import CompPoly.Multilinear.Basic
 
 /-!
   # Fast ↔ Spec equivalence for the multilinear zeta / Möbius transforms
@@ -24,6 +26,8 @@ import CompPoly.Multilinear.Basic
   `lagrangeToMono_eq_lagrangeToMonoSpec` and `monoToLagrange_eq_monoToLagrangeSpec`
   are exported.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -518,6 +522,10 @@ private lemma lagrangeToMono_eq_mobiusPartial_zero
     have h2 : n - m' = n - (m' + 1) + 1 := by omega
     simp only [h2] at *
     convert hstep using 2
+    · apply congrArg
+        (fun h : Fin n => lagrangeToMonoLevel h (Vector.ofFn (mobiusPartial (n - (m' + 1) + 1) p)))
+      apply Fin.ext
+      simp [h1]
 
 /-- The fast Möbius transform `lagrangeToMono` is pointwise equal to the inclusion-exclusion
 specification `lagrangeToMonoSpec`. Combines the fold lemma with the `k = 0` base case. -/

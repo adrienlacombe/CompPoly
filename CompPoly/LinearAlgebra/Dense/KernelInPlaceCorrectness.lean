@@ -3,10 +3,11 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.LinearAlgebra.Dense.KernelInPlace
-import CompPoly.LinearAlgebra.Dense.RowOpsCorrectness
-import CompPoly.LinearAlgebra.Dense.RrefSemantics
+public import CompPoly.LinearAlgebra.Dense.KernelInPlace
+public import CompPoly.LinearAlgebra.Dense.RowOpsCorrectness
+public import CompPoly.LinearAlgebra.Dense.RrefSemantics
 
 /-!
 # In-Place Dense Kernel Correctness
@@ -17,6 +18,8 @@ so it returns the same witness. This file proves that equivalence, culminating i
 `homogeneousWitnessInPlace_eq`, which lets the certified Guruswami-Sudan backend run
 the in-place implementation while reusing every existing correctness theorem.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -163,6 +166,7 @@ theorem swapRowsData_eq [Zero F] (M : DenseMatrix F) (rowA rowB : Nat) :
 theorem findPivotRowData_eq [Zero F] [BEq F] (M : DenseMatrix F) (startRow col : Nat) :
     findPivotRowData M.rows M.cols startRow col M.data = findPivotRow M startRow col := by
   simp only [findPivotRowData, findPivotRow, get, index]
+  rfl
 
 /-- The in-place elimination loop tracks the copying one entry-for-entry. -/
 private theorem forIn_eliminate_eq [Field F] (cols pivotRow pivotCol : Nat) :
@@ -209,11 +213,13 @@ theorem normalizeAndEliminateData_eq [Field F] [BEq F] (M : DenseMatrix F)
       scaleRowData_eq M pivotRow _
     have hcols : (scaleRow M pivotRow (M.get pivotRow pivotCol)⁻¹).cols = M.cols := by
       rw [scaleRow]
+    have hrows : (scaleRow M pivotRow (M.get pivotRow pivotCol)⁻¹).rows = M.rows := by
+      rw [scaleRow]
     have heli := forIn_eliminate_eq M.cols pivotRow pivotCol
       (List.range' 0 (Std.Legacy.Range.size [:M.rows]))
       (scaleRow M pivotRow (M.get pivotRow pivotCol)⁻¹) hcols
     rw [hstart]
-    simpa [Std.Legacy.Range.forIn_eq_forIn_range'] using heli
+    simpa [Std.Legacy.Range.forIn_eq_forIn_range', hrows] using heli
 
 /-- The in-place reduction loop tracks the copying reduction loop, returning the
 same reduced backing array and the same pivot columns. -/
@@ -265,6 +271,7 @@ theorem homogeneousWitnessInPlace_eq [Field F] [BEq F] (M : DenseMatrix F) :
     homogeneousWitnessInPlace M = homogeneousWitness M := by
   simp only [homogeneousWitnessInPlace, homogeneousWitness,
     homogeneousKernelBasisInPlace, homogeneousKernelBasis, rrefInPlace_eq, rref_cols]
+  rfl
 
 end DenseMatrix
 

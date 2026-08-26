@@ -3,7 +3,10 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Derek Sorensen
 -/
-import CompPoly.Univariate.ToPoly.Degree
+module
+
+import all CompPoly.Univariate.ToPoly.Degree
+public import CompPoly.Univariate.ToPoly.Degree
 
 /-!
   # Univariate Linear Regression Tests
@@ -11,21 +14,23 @@ import CompPoly.Univariate.ToPoly.Degree
   Compile-time regressions for the instance-stable bounded-degree API.
 -/
 
+@[expose] public section
+
 namespace CompPoly
 namespace CPolynomial
 
 @[implicit_reducible] private def natBeqEq : BEq Nat := ⟨fun a b => decide (a = b)⟩
 
 private theorem nat_lawful_beq_eq : @LawfulBEq Nat natBeqEq := by
-  letI : BEq Nat := natBeqEq
+  let : BEq Nat := natBeqEq
   refine { rfl := ?_, eq_of_beq := ?_ }
   · intro a; erw [show natBeqEq.beq a a = decide (a = a) from rfl]; simp
   · intro a b h; erw [show natBeqEq.beq a b = decide (a = b) from rfl] at h; simpa using h
 
-@[implicit_reducible] private def natBeqSucc : BEq Nat := ⟨fun a b => decide (a.succ = b.succ)⟩
+@[implicit_reducible] def natBeqSucc : BEq Nat := ⟨fun a b => decide (a.succ = b.succ)⟩
 
-private theorem nat_lawful_beq_succ : @LawfulBEq Nat natBeqSucc := by
-  letI : BEq Nat := natBeqSucc
+theorem nat_lawful_beq_succ : @LawfulBEq Nat natBeqSucc := by
+  let : BEq Nat := natBeqSucc
   refine { rfl := ?_, eq_of_beq := ?_ }
   · intro a; erw [show natBeqSucc.beq a a = decide (a.succ = a.succ) from rfl]; simp
   · intro a b h
@@ -53,7 +58,11 @@ with no cast. -/
 private def reusedDegreeLT : ↥(CPolynomial.degreeLT (R := Nat) 3) := leftDegreeLT
 
 example : reusedPoly.coeff 1 = 7 := by
-  simpa [reusedPoly, leftPoly] using CPolynomial.coeff_monomial (R := Nat) 1 1 7
+  unfold reusedPoly leftPoly
+  change CPolynomial.coeff
+    (@CPolynomial.monomial Nat inferInstance natBeqEq nat_lawful_beq_eq inferInstance 1 7) 1 = 7
+  simpa using
+    (@CPolynomial.coeff_monomial Nat inferInstance natBeqEq nat_lawful_beq_eq inferInstance 1 1 7)
 
 example : reusedDegreeLT.1 = reusedPoly := rfl
 
@@ -63,7 +72,9 @@ example : (reusedDegreeLT + reusedDegreeLT).1.coeff 1 = 14 := by
   calc
     (reusedDegreeLT + reusedDegreeLT).1.coeff 1 =
         reusedDegreeLT.1.coeff 1 + reusedDegreeLT.1.coeff 1 := by
-          simpa using CPolynomial.coeff_add reusedDegreeLT.1 reusedDegreeLT.1 1
+          change CPolynomial.coeff (reusedDegreeLT.1 + reusedDegreeLT.1) 1 =
+            CPolynomial.coeff reusedDegreeLT.1 1 + CPolynomial.coeff reusedDegreeLT.1 1
+          exact CPolynomial.coeff_add reusedDegreeLT.1 reusedDegreeLT.1 1
     _ = 7 + 7 := by
       congr
     _ = 14 := by norm_num
@@ -79,7 +90,7 @@ private def intDegreeLT : ↥(CPolynomial.degreeLT (R := Int) 3) := by
   simp [intPoly, CPolynomial.monomial, CPolynomial.Raw.monomial]
 
 example : CPolynomial.degreeLTEquiv (R := Int) 3 intDegreeLT ⟨1, by decide⟩ = 7 := by
-  simpa [CPolynomial.degreeLTEquiv, CPolynomial.degreeLTCoeffs, intDegreeLT, intPoly] using
+  simpa [CPolynomial.degreeLTEquiv, CPolynomial.degreeLTCoeffs_apply, intDegreeLT, intPoly] using
     CPolynomial.coeff_monomial (R := Int) 1 1 7
 
 end CPolynomial

@@ -3,10 +3,13 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Univariate.Raw.Modular
-import CompPoly.Univariate.EuclideanAlgorithm
-import CompPoly.Univariate.Roots.Context
+import all CompPoly.Univariate.EuclideanAlgorithm
+import all CompPoly.Univariate.Raw.Modular
+public import CompPoly.Univariate.Raw.Modular
+public import CompPoly.Univariate.EuclideanAlgorithm
+public import CompPoly.Univariate.Roots.Context
 
 /-!
 # Finite-Field Root Products
@@ -15,6 +18,8 @@ Executable construction of `gcd(p, X^q - X)` as
 `gcd(p, (X^q mod p) - (X mod p))`, so large finite fields never materialize the
 dense polynomial `X^q - X`.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -163,7 +168,8 @@ theorem finiteFieldRootProductWith_toPoly_eq_normalize_gcd {F : Type*}
     apply hp
     apply CPolynomial.ext
     rw [CPolynomial.trim_eq] at hpraw0
-    simpa using hpraw0
+    change p.val = (#[] : CPolynomial.Raw F)
+    exact hpraw0
   have hpzero : ¬(p.val.trim == (0 : CPolynomial.Raw F)) := by
     intro hzero
     exact hpraw (LawfulBEq.eq_of_beq hzero)
@@ -210,7 +216,9 @@ private theorem raw_monicNormalize_toPoly_monic {F : Type*}
     intro h
     have hval := congrArg Subtype.val h
     unfold CPolynomial.ofArray at hval
-    exact hp (by simpa using hval)
+    apply hp
+    change p.trim = (0 : CPolynomial F).val
+    exact hval
   have hpPoly : (CPolynomial.ofArray p).toPoly ≠ 0 :=
     (CPolynomial.toPoly_eq_zero_iff (CPolynomial.ofArray p)).not.mpr hpC
   exact Polynomial.monic_normalize hpPoly
@@ -231,7 +239,9 @@ private theorem raw_modContext_toPoly_eq_modByMonic {F : Type*}
     exact hqTrim
   have h := CPolynomial.modByMonic_toPoly_eq_modByMonic
     (CPolynomial.ofArray p) (CPolynomial.ofArray q) hqMonic
-  simpa [CPolynomial.modByMonic, hpval, hqval, CPolynomial.ofArray_toPoly] using h
+  rw [CPolynomial.ofArray_toPoly]
+  simpa [CPolynomial.modByMonic, CPolynomial.toPoly, hpval, hqval,
+    CPolynomial.ofArray_toPoly] using h
 
 private theorem raw_mulModWith_toPoly_eq_modByMonic {F : Type*}
     [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
@@ -482,7 +492,7 @@ theorem finiteFieldRootProductWith_dvd_frobenius_of_context {F : Type*}
     (ctx : FiniteFieldContext F) {p : CPolynomial F} (_hp : p ≠ 0) :
     (finiteFieldRootProductWith M D ctx p).toPoly ∣
       ((Polynomial.X : Polynomial F) ^ ctx.q - Polynomial.X) := by
-  letI : DecidableEq F := instDecidableEqOfLawfulBEq
+  let : DecidableEq F := instDecidableEqOfLawfulBEq
   rw [finiteFieldRootProductWith_toPoly_eq_normalize_gcd M D ctx _hp]
   apply dvd_trans (normalize_associated _).dvd
   let pMonic := CPolynomial.monicNormalize p
@@ -510,7 +520,8 @@ theorem finiteFieldRootProductWith_dvd_frobenius_of_context {F : Type*}
       apply _hp
       apply CPolynomial.ext
       rw [CPolynomial.trim_eq] at hpraw0
-      simpa using hpraw0
+      change p.val = (#[] : CPolynomial.Raw F)
+      exact hpraw0
     rw [raw_monicNormalize_trim] at hval
     exact raw_monicNormalize_ne_zero_of_trim_ne_zero hpraw hval
   have hmod : pMonic.val.trim ≠ 0 := by
@@ -518,7 +529,8 @@ theorem finiteFieldRootProductWith_dvd_frobenius_of_context {F : Type*}
     apply hpMonicNe
     apply CPolynomial.ext
     rw [CPolynomial.trim_eq] at htrim
-    simpa using htrim
+    change pMonic.val = (#[] : CPolynomial.Raw F)
+    exact htrim
   have hnormModulus :
       (CPolynomial.ofArray (CPolynomial.Raw.monicNormalize pMonic.val)).toPoly =
         pMonic.toPoly := by
@@ -582,7 +594,8 @@ theorem monicNormalize_ne_zero_of_ne_zero {F : Type*}
     apply hp
     apply CPolynomial.ext
     rw [CPolynomial.trim_eq] at hpraw0
-    simpa using hpraw0
+    change p.val = (#[] : CPolynomial.Raw F)
+    exact hpraw0
   rw [raw_monicNormalize_trim] at hval
   exact raw_monicNormalize_ne_zero_of_trim_ne_zero hpraw hval
 
@@ -599,7 +612,8 @@ theorem gcdMonic_ne_zero_of_left {F : Type*} [Field F] [BEq F] [LawfulBEq F]
     apply hp
     apply CPolynomial.ext
     rw [CPolynomial.trim_eq] at hpraw0
-    simpa using hpraw0
+    change p.val = (#[] : CPolynomial.Raw F)
+    exact hpraw0
   unfold CPolynomial.Raw.gcdMonic at hval
   exact raw_gcdMonicWithFuel_trim_ne_zero_of_left _ p.val q.val hpraw hval
 
@@ -619,12 +633,14 @@ theorem finiteFieldRootProductWith_ne_zero_of_ne_zero {F : Type*}
     apply hp
     apply CPolynomial.ext
     rw [CPolynomial.trim_eq] at hpraw0
-    simpa using hpraw0
+    change p.val = (#[] : CPolynomial.Raw F)
+    exact hpraw0
   unfold CPolynomial.Raw.Roots.FiniteField.finiteFieldRootProductWith at hval
   by_cases hpempty : p.val = (#[] : CPolynomial.Raw F)
   · apply hp
     apply CPolynomial.ext
-    simpa using hpempty
+    change p.val = (#[] : CPolynomial.Raw F)
+    exact hpempty
   · simp [hpempty, CPolynomial.trim_eq] at hval
     unfold CPolynomial.Raw.gcdMonic at hval
     exact raw_gcdMonicWithFuel_trim_ne_zero_of_left

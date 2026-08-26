@@ -3,16 +3,19 @@ Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Chung Thai Nguyen
 -/
+module
 
-import CompPoly.Fields.Binary.Tower.Support.IrreducibilityAndTraceMapProperty
-import CompPoly.Data.RingTheory.AlgebraTower
-import Mathlib.Tactic.DepRewrite
+public import CompPoly.Fields.Binary.Tower.Support.IrreducibilityAndTraceMapProperty
+public import CompPoly.Data.RingTheory.AlgebraTower
+public import Mathlib.Tactic.DepRewrite
 
 /-!
 # Abstract Binary Tower Core
 
 Core definitions and existence data for the abstract binary tower construction.
 -/
+
+@[expose] public section
 
 namespace BinaryTower
 
@@ -375,7 +378,7 @@ def BinaryTowerAux (k : ℕ) : (Σ' (F : Type 0), BinaryTowerResult F k) :=
       ⟨ inductive_result.fst, inductive_result.snd.binaryTowerResult ⟩
     exact res
 
-@[simp]
+@[simp, implicit_reducible]
 def BTField (k : ℕ) := (BinaryTowerAux k).1
 
 lemma BTField_is_BTFieldAux (k : ℕ) :
@@ -403,7 +406,7 @@ instance BTFieldNeZero1 (k : ℕ) : NeZero (1 : BTField k) := by
 instance BTField_Fintype (k : ℕ) : Fintype (BTField k) := (BinaryTowerAux k).2.instFintype
 
 @[simp]
-def BTFieldCard (k : ℕ) : Fintype.card (BTField k) = 2^(2^k) :=
+theorem BTFieldCard (k : ℕ) : Fintype.card (BTField k) = 2^(2^k) :=
   (BinaryTowerAux k).2.fieldFintypeCard
 
 instance BTFieldIsDomain (k : ℕ) : IsDomain (BTField k) := inferInstance
@@ -413,7 +416,7 @@ instance BTFieldNoZeroDiv (k : ℕ) : NoZeroDivisors (BTField k) := by
   infer_instance
 
 @[simp]
-def sumZeroIffEq (k : ℕ) : ∀ (x y : BTField k),
+theorem sumZeroIffEq (k : ℕ) : ∀ (x y : BTField k),
     x + y = 0 ↔ x = y := (BinaryTowerAux k).2.sumZeroIffEq
 
 instance BTFieldChar2 (k : ℕ) : CharP (BTField k) 2 :=
@@ -445,9 +448,9 @@ lemma BTField.cast_BTField_eq (k m : ℕ) (h_eq : k = m) :
   rfl
 
 lemma BTField.cast_mul (m n : ℕ) {x y : BTField m} (h_eq : m = n) :
-    (cast (by exact BTField.cast_BTField_eq m n h_eq) (x * y)) =
-  (cast (by exact BTField.cast_BTField_eq m n h_eq) x) *
-  (cast (by exact BTField.cast_BTField_eq m n h_eq) y) := by
+    (cast (BTField.cast_BTField_eq m n h_eq) (x * y)) =
+  (cast (BTField.cast_BTField_eq m n h_eq) x) *
+  (cast (BTField.cast_BTField_eq m n h_eq) y) := by
   subst h_eq
   rfl
 
@@ -525,11 +528,11 @@ theorem list_nonempty (k : ℕ) : (list k).1 ≠ [] := by
   have : k + 1 ≠ 0 := Nat.succ_ne_zero k
   contradiction
 
-instance polyIrreducible (n : ℕ) : Irreducible (poly n) := (BinaryTowerAux n).2.instIrreduciblePoly
+theorem polyIrreducible (n : ℕ) : Irreducible (poly n) := (BinaryTowerAux n).2.instIrreduciblePoly
 
 instance polyIrreducibleFact (n : ℕ) : Fact (Irreducible (poly n)) := ⟨polyIrreducible n⟩
 
-instance polyMonic (n : ℕ) : Monic (poly n) := definingPoly_is_monic (Z n)
+theorem polyMonic (n : ℕ) : Monic (poly n) := definingPoly_is_monic (Z n)
 
 lemma poly_ne_zero (n : ℕ) : poly n ≠ 0 := (polyMonic n).ne_zero
 

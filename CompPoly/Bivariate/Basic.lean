@@ -3,8 +3,10 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Derek Sorensen, Dimitris Mitsios
 -/
+module
 
-import CompPoly.Univariate.Basic
+import all CompPoly.Univariate.Basic
+public import CompPoly.Univariate.Basic
 
 /-!
 # Computable Bivariate Polynomials
@@ -20,6 +22,8 @@ The design is intended to be compatible with:
   ArkLib/Data/CodingTheory/PolishchukSpielman/Degrees.lean, BCIKS20.lean, etc.)
 -/
 
+@[expose] public section
+
 namespace CompPoly
 
 /-- Computable bivariate polynomials: `F[X][Y]` as `CPolynomial (CPolynomial R)`.
@@ -27,6 +31,7 @@ namespace CompPoly
   Each `p : CBivariate R` is a polynomial in `Y` whose coefficients are univariate polynomials
   in `X`. The outer structure is indexed by powers of `Y`, the inner by powers of `X`.
   -/
+@[implicit_reducible]
 def CBivariate (R : Type*) [Zero R] :=
     CPolynomial (CPolynomial R)
 
@@ -240,7 +245,8 @@ variable {R : Type*}
 /-- `CBivariate.coeff` as two composed `CPolynomial.coeff`. -/
 @[simp]
 theorem coeff_eq_coeff_coeff [Zero R] (f : CBivariate R) (i j : ℕ) :
-    coeff f i j = CPolynomial.coeff (CPolynomial.coeff f j) i := rfl
+    coeff f i j = CPolynomial.coeff (CPolynomial.coeff f j) i := by
+  rfl
 
 /-- Bivariate coefficients are additive. -/
 theorem coeff_add [Semiring R] [BEq R] [LawfulBEq R] [Nontrivial R]

@@ -3,9 +3,11 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Natalia Klaus, Frantisek Silvasi, Derek Sorensen, Andrew Zitek-Estrada
 -/
-import CompPoly.Multivariate.MvPolyEquiv.Eval
-import CompPoly.Multivariate.MvPolyEquiv.Instances
-import CompPoly.Univariate.CMvEquiv
+module
+
+public import CompPoly.Multivariate.MvPolyEquiv.Eval
+public import CompPoly.Multivariate.MvPolyEquiv.Instances
+public import CompPoly.Univariate.CMvEquiv
 
 /-!
 # simp/grind lemmas for `CPoly.CMvPolynomial.eval`
@@ -18,9 +20,11 @@ single-variable `CMvPolynomial`s over an integral domain (a Schwartz–Zippel
 style result specialized to one variable), suitable for soundness proofs in
 protocols such as sumcheck.
 -/
+
+@[expose] public section
 namespace CPoly
 
-open CMvPolynomial
+open _root_.CPoly.CMvPolynomial
 
 section
 
@@ -29,11 +33,11 @@ variable (vals : Fin n → R)
 
 @[simp]
 lemma eval_zero : (0 : CMvPolynomial n R).eval vals = 0 := by
-  simpa [eval₂Hom_apply] using (eval₂Hom (RingHom.id R) vals).map_zero
+  simp [eval_equiv]
 
 @[simp]
 lemma eval_one : (1 : CMvPolynomial n R).eval vals = 1 := by
-  simpa [eval₂Hom_apply] using (eval₂Hom (RingHom.id R) vals).map_one
+  simp [eval_equiv]
 
 @[simp]
 lemma eval_C (c : R) : (CMvPolynomial.C c : CMvPolynomial n R).eval vals = c := by
@@ -50,7 +54,11 @@ lemma eval_mul (p q : CMvPolynomial n R) :
 @[simp]
 lemma eval_pow (p : CMvPolynomial n R) (k : ℕ) :
     (p ^ k).eval vals = (p.eval vals) ^ k := by
-  simpa [eval₂Hom_apply] using (eval₂Hom (RingHom.id R) vals).map_pow p k
+  induction k with
+  | zero =>
+      simp
+  | succ k ih =>
+      rw [pow_succ, eval_mul, ih, pow_succ]
 
 end
 
@@ -62,12 +70,12 @@ variable (vals : Fin n → R)
 @[simp]
 lemma eval_neg (p : CMvPolynomial n R) :
     (-p).eval vals = -(p.eval vals) := by
-  simpa [eval₂Hom_apply] using (eval₂Hom (RingHom.id R) vals).map_neg p
+  simp [eval_equiv]
 
 @[simp]
 lemma eval_sub (p q : CMvPolynomial n R) :
     (p - q).eval vals = p.eval vals - q.eval vals := by
-  simpa [eval₂Hom_apply] using (eval₂Hom (RingHom.id R) vals).map_sub p q
+  rw [sub_eq_add_neg, eval_add, eval_neg, sub_eq_add_neg]
 
 end
 

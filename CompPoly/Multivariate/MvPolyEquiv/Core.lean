@@ -3,19 +3,24 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Frantisek Silvasi, Julian Sutherland, Andrei Burdușa, Dimitris Mitsios
 -/
-import Batteries.Data.Vector.Lemmas
-import CompPoly.Multivariate.CMvPolynomial
-import Mathlib.Algebra.MvPolynomial.Basic
-import Mathlib.Algebra.MvPolynomial.Equiv
-import Mathlib.Algebra.Ring.Defs
-import CompPoly.Multivariate.Lawful
-import Batteries.Data.Vector.Basic
+module
+
+public import Batteries.Data.Vector.Lemmas
+public import CompPoly.Data.List.Lemmas
+public import CompPoly.Multivariate.CMvPolynomial
+public import Mathlib.Algebra.MvPolynomial.Basic
+public import Mathlib.Algebra.MvPolynomial.Equiv
+public import Mathlib.Algebra.Ring.Defs
+public import CompPoly.Multivariate.Lawful
+public import Batteries.Data.Vector.Basic
 
 /-!
 # `CMvPolynomial`/`MvPolynomial` Core
 
 Core conversions between `CMvPolynomial` and `MvPolynomial`.
 -/
+
+@[expose] public section
 
 open Std
 
@@ -31,7 +36,7 @@ def fromCMvPolynomial  (p : CMvPolynomial n R) : MvPolynomial (Fin n) R :=
   let support : List (Fin n →₀ ℕ) := p.monomials.map CMvMonomial.toFinsupp
   let toFun (f : Fin n →₀ ℕ) : R := p[CMvMonomial.ofFinsupp f]?.getD 0
   let mem_support_fun {a : Fin n →₀ ℕ} : a ∈ support ↔ toFun a ≠ 0 := by grind
-  Finsupp.mk support.toFinset toFun (by simp [mem_support_fun])
+  AddMonoidAlgebra.ofCoeff <| Finsupp.mk support.toFinset toFun (by simp [mem_support_fun])
 
 noncomputable def toCMvPolynomial (p : MvPolynomial (Fin n) R) : CMvPolynomial n R :=
   let ⟨s, f, _⟩ := p
@@ -57,7 +62,7 @@ noncomputable def toCMvPolynomial (p : MvPolynomial (Fin n) R) : CMvPolynomial n
         exact h₁
         case distinct =>
           simp only [List.pairwise_map]
-          exact List.distinct_of_inj_nodup CMvMonomial.injective_ofFinsupp (Finset.nodup_toList _)
+          exact List.Nodup.pairwise_ne_map CMvMonomial.injective_ofFinsupp (Finset.nodup_toList _)
       grind
   ⟩
 
@@ -79,7 +84,7 @@ theorem toCMvPolynomial_fromCMvPolynomial {p : CMvPolynomial n R} :
     grind
     case distinct =>
       simp only [Std.compare_eq_iff_eq, List.pairwise_map]
-      exact List.distinct_of_inj_nodup CMvMonomial.injective_ofFinsupp (Finset.nodup_toList _)
+      exact List.Nodup.pairwise_ne_map CMvMonomial.injective_ofFinsupp (Finset.nodup_toList _)
 
 omit [BEq R] [LawfulBEq R] in
 @[grind =, simp]
@@ -103,7 +108,7 @@ theorem fromCMvPolynomial_toCMvPolynomial {p : MvPolynomial (Fin n) R} :
                                          (mem := by simp; use m) (distinct := ?distinct)]
     case distinct =>
       simp only [Std.compare_eq_iff_eq, List.pairwise_map]
-      exact List.distinct_of_inj_nodup CMvMonomial.injective_ofFinsupp (Finset.nodup_toList _)
+      exact List.Nodup.pairwise_ne_map CMvMonomial.injective_ofFinsupp (Finset.nodup_toList _)
   · have : ∀ x ∈ s, CMvMonomial.ofFinsupp x ≠ CMvMonomial.ofFinsupp m := by aesop
     grind
 
@@ -114,7 +119,8 @@ lemma fromCMvPolynomial_injective : Function.Injective (@fromCMvPolynomial n R _
 
 omit [BEq R] [LawfulBEq R] in
 lemma coeff_eq {m} (a : CMvPolynomial n R) :
-    MvPolynomial.coeff m (fromCMvPolynomial a) = a.coeff (CMvMonomial.ofFinsupp m) := rfl
+    MvPolynomial.coeff m (fromCMvPolynomial a) = a.coeff (CMvMonomial.ofFinsupp m) := by
+  rfl
 
 @[aesop simp]
 lemma eq_iff_fromCMvPolynomial {u v: CMvPolynomial n R} :

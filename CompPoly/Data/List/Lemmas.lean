@@ -3,14 +3,19 @@ Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Chung Thai Nguyen, Gregor Mitscha-Baude
 -/
-import Mathlib.Algebra.GroupWithZero.Nat
-import Mathlib.Data.List.GetD
-import Mathlib.Data.Nat.Lattice
-import Mathlib.Tactic.Cases
+module
+
+public import Mathlib.Algebra.GroupWithZero.Nat
+public import Mathlib.Data.List.GetD
+public import Mathlib.Data.List.Nodup
+public import Mathlib.Order.Lattice.Nat
+public import Mathlib.Tactic.Cases
 
 /-!
 # Auxiliary lemmas for `List`
 -/
+
+@[expose] public section
 universe u v w
 
 namespace List
@@ -127,7 +132,7 @@ theorem rightpad_eq_if_rightpad_eq_of_ge (l l' : List α) (m n n' : Nat) (h : n 
   simp [hLen]
   -- Substitute the expressions for the rightpads into the goal.
   have h_subst : l ++ replicate (n - l.length) unit = l' ++ replicate (n' - l'.length) unit := by
-    convert hEq using 1;
+    simpa only [rightpad] using hEq
   rw [ List.replicate_add, List.replicate_add ];
   rw [ ← List.append_assoc, ← List.append_assoc, h_subst ]
 
@@ -205,5 +210,13 @@ def dropLastWhile (p : α → Bool) (l : List α) : List α :=
 lemma zipWith_const {α β : Type _} {f : α → β → β} {l₁ : List α} {l₂ : List β}
     (h₁ : l₁.length = l₂.length) (h₂ : ∀ a b, f a b = b) : l₁.zipWith f l₂ = l₂ := by
   induction' l₁ with hd tl ih generalizing l₂ <;> rcases l₂ <;> aesop
+
+/-- An injective `f` separates the elements of a duplicate-free list pairwise.
+
+This is `List.Nodup.map` transported along `List.pairwise_map`, stated in the unmapped form that
+`Std.ExtTreeMap.getElem_ofList_of_mem` and friends ask for. -/
+theorem Nodup.pairwise_ne_map {α : Type u} {β : Type v} {l : List α} {f : α → β}
+    (hf : Function.Injective f) (hl : l.Nodup) : l.Pairwise fun a b => f a ≠ f b :=
+  List.pairwise_map.mp (Nodup.map hf hl)
 
 end List

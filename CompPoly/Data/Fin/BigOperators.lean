@@ -3,17 +3,21 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chung Thai Nguyen, Quang Dao
 -/
-import Mathlib.Algebra.Order.Star.Basic
-import Mathlib.Algebra.Ring.Regular
-import Mathlib.Data.Fintype.BigOperators
-import Mathlib.Order.Interval.Finset.Nat
-import Mathlib.Tactic.IntervalCases
+module
+
+public import Mathlib.Algebra.Order.Star.Basic
+public import Mathlib.Algebra.Ring.Regular
+public import Mathlib.Data.Fintype.BigOperators
+public import Mathlib.Order.Interval.Finset.Nat
+public import Mathlib.Tactic.IntervalCases
 
 /-!
 
 # More lemmas about Fin and big operators
 
 -/
+
+@[expose] public section
 theorem mul_two_add_bit_lt_two_pow (a b c : ℕ) (i : Fin 2)
     (h_a : a < 2 ^ b) (h_b : b < c) :
     a * 2 + i.val < 2^c := by
@@ -108,7 +112,7 @@ This is useful when the type `Fin r` is fixed and we want to induct on the eleme
 It's similar to `Fin.inductionOn`, but formulated with an explicit upper bound check.
 -/
 @[elab_as_elim] def Fin.succRecOnSameFinType {motive : Fin r → Sort _}
-    (zero : motive (0 : Fin r))
+    (zero : motive (⟨0, Nat.pos_of_neZero r⟩ : Fin r))
     (succ : ∀ i : Fin r, i + 1 < r → motive i → motive (i + 1)) : ∀ (i : Fin r), motive i
   | ⟨0, _⟩ => by exact zero
   | ⟨Nat.succ i_val, h⟩ => by -- ⊢ motive ⟨i_val.succ, h⟩
@@ -127,9 +131,10 @@ It's similar to `Fin.inductionOn`, but formulated with an explicit upper bound c
       rw [h_i_succ_eq]
       exact res
     else
-      by_contra h_i_add_1
-      simp only at h_i_add_1
-      contradiction
+      exfalso
+      apply h_i_add_1
+      simp [i]
+      omega
 
 /--
 Recursion principle for `Fin r` that iterates downwards from `r - 1`.
@@ -163,6 +168,7 @@ This is useful for definitions that process elements in reverse order, like `fol
     have motive_next := Fin.predRecOnSameFinType last succ ⟨i_next, by omega⟩
     have motive_next_ind := succ (i := ⟨i_next, by omega⟩) (by omega) (motive_next)
     convert motive_next_ind
+    · simp [i_next]
 termination_by (r - 1 - i.val)
 
 /--

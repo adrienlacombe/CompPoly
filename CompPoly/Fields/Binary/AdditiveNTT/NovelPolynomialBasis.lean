@@ -3,12 +3,13 @@ Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chung Thai Nguyen, Quang Dao
 -/
+module
 
-import CompPoly.Data.Nat.Bitwise
-import CompPoly.Data.Polynomial.Frobenius
-import CompPoly.Data.Polynomial.MonomialBasis
-import Mathlib.LinearAlgebra.StdBasis
-import Mathlib.Algebra.Polynomial.Degree.Defs
+public import CompPoly.Data.Nat.Bitwise
+public import CompPoly.Data.Polynomial.Frobenius
+public import CompPoly.Data.Polynomial.MonomialBasis
+public import Mathlib.LinearAlgebra.StdBasis
+public import Mathlib.Algebra.Polynomial.Degree.Defs
 
 /-!
 # Novel Polynomial Basis
@@ -36,6 +37,8 @@ algebra over its prime-characteristic subfield `𝔽q`, and an `𝔽q`-basis `β
 * [Von zur Gathen, J., and Gerhard, J., *Arithmetic and factorization of polynomial
     over F2 (extended abstract)*][GGJ96]
 -/
+
+@[expose] public section
 
 set_option linter.style.longFile 1800
 
@@ -203,7 +206,7 @@ lemma βᵢ_not_in_Uᵢ (i : Fin r) :
   exact fun h_in_U => h_li (by
     -- ⊢ β i ∈ Submodule.span 𝔽q (β '' (Set.univ \ {i}))
     have res := Submodule.span_mono h_subset h_in_U
-    rw [Set.compl_eq_univ_diff] at res
+    rw [Set.compl_eq_univ_sdiff] at res
     exact res
   )
 
@@ -467,10 +470,12 @@ lemma rootMultiplicity_comp_X_sub_C (p : L[X]) (a x : L) :
     -- ⊢ multiplicity (X - C x) (p.comp (X - C a)) = multiplicity (X - (C x - C a)) p
     have res : multiplicity (X - (C x - C a)) p = multiplicity (X - C x) (p.comp (X - C a)):= by
       convert (multiplicity_map_eq <| algEquivAevalXSubC a).symm using 2
-      -- ⊢ X - C x = (algEquivAevalXSubC a) (X - (C x - C a))
-      simp only [algEquivAevalXSubC, algEquivOfCompEqX_apply]
-      simp only [map_sub, aeval_X, aeval_C, algebraMap_eq]
-      simp only [sub_sub_sub_cancel_right]
+      · -- ⊢ X - C x = (algEquivAevalXSubC a) (X - (C x - C a))
+        simp only [algEquivAevalXSubC, algEquivOfCompEqX_apply]
+        simp only [map_sub, aeval_X, aeval_C, algebraMap_eq]
+        ring
+      · rw [Polynomial.comp_eq_aeval]
+        simp only [algEquivAevalXSubC, algEquivOfCompEqX_apply]
     exact res.symm
 
 omit [Fintype L] in
@@ -487,7 +492,6 @@ lemma roots_comp_X_sub_C (p : L[X]) (a : L) :
   -- Use `filter_congr` to rewrite the predicate inside the filter to isolate `r`.
   rw [Multiset.filter_congr (p := fun r => s = r + a) (q := fun r => s - a = r) (by {
     intro r hr_root
-    simp only
     -- ⊢ s = r + a ↔ s - a = r
     rw [add_comm]
     have res := eq_sub_iff_add_eq (a := r) (b := s) (c := a)
@@ -1062,6 +1066,7 @@ theorem W_linearity (i : Fin r) :
   induction i using Fin.succRecOnSameFinType with
   | zero =>
     -- Base Case: i = 0 => Prove W₀ is linear.
+    simp only [Fin.mk_zero']
     unfold W
     have h_U0 : (univ : Finset (U 𝔽q β 0)) = {0} := by
       ext u -- u : ↥(U 𝔽q β 0)
@@ -1349,9 +1354,10 @@ lemma degree_Xⱼ (ℓ : ℕ) (h_ℓ : ℓ ≤ r) (j : Fin (2 ^ ℓ)) :
       simp only [Nat.cast_sum, Nat.cast_ite, Nat.cast_pow, Nat.cast_ofNat,
         Nat.cast_zero] at h2
       convert h2 using 1
-      apply Finset.sum_congr rfl
-      intro x _
-      simp only [Nat.cast_ite, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_zero]
+      · apply Finset.sum_congr rfl
+        intro x _
+        simp only [Nat.cast_ite, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_zero]
+      · rfl
     -- ⊢ (∑ x, f x.val) = j.val in ℕ
     rw [Fin.sum_univ_eq_sum_range (n:=ℓ)] -- switch to sum over Finset.range ℓ
     have h_range: range ℓ = Icc 0 (ℓ-1) := by
@@ -1413,7 +1419,7 @@ lemma linearIndependent_rows_of_lower_triangular_ne_zero_diag
   LinearIndependent R A := by -- This follows from the fact that such a matrix is invertible
   -- because its determinant is non-zero.
   have h_det : A.det ≠ 0 := by
-    rw [Matrix.det_of_lowerTriangular A h_lower_triangular]
+    rw [Matrix.det_of_isLowerTriangular A h_lower_triangular]
     apply prod_ne_zero_iff.mpr
     intro i _; exact h_diag i
   exact Matrix.linearIndependent_rows_of_det_ne_zero (A := A) h_det
@@ -1460,7 +1466,7 @@ theorem changeOfBasisMatrix_det_ne_zero
   (changeOfBasisMatrix 𝔽q β ℓ h_ℓ).det ≠ 0 := by
   let A := changeOfBasisMatrix 𝔽q β ℓ h_ℓ
   -- Use the fact that A is lower-triangular with non-zero diagonal
-  rw [Matrix.det_of_lowerTriangular A]
+  rw [Matrix.det_of_isLowerTriangular A]
   · -- The determinant of a lower-triangular matrix is
     -- the product of diagonal entries: ⊢ ∏ i, A i i ≠ 0
     let res := changeOfBasisMatrix_diag_ne_zero 𝔽q β ℓ h_ℓ

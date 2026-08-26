@@ -3,16 +3,19 @@ Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chung Thai Nguyen, Quang Dao
 -/
+module
 
-import CompPoly.Fields.Binary.AdditiveNTT.Algorithm
-import CompPoly.Fields.Binary.Tower.Concrete.Basis
-import Mathlib.Data.BitVec
+public import CompPoly.Fields.Binary.AdditiveNTT.Algorithm
+public import CompPoly.Fields.Binary.Tower.Concrete.Basis
+public import Mathlib.Data.BitVec
 
 /-!
 # Additive NTT Implementation
 
 Concrete implementation of the Additive NTT algorithm.
 -/
+
+@[expose] public section
 
 namespace AdditiveNTT
 open ConcreteBinaryTower
@@ -99,6 +102,9 @@ def computableTwiddleFactor (i : Fin ℓ) (u : Fin (2 ^ (ℓ + R_rate - i - 1)))
       (i := ⟨i, by omega⟩) (x := β ⟨i + 1 + k, by omega⟩))
   else 0
 
+-- The `Fact` instance is stated explicitly (matching the variable declaration) so that the
+-- basis `β` and field `𝔽q` remain named parameters for the `computableAdditiveNTT` call site.
+set_option linter.overlappingInstances false in
 /-- Performs one stage of the Additive NTT. This corresponds to `NTTStage` in the abstract
 definition: `b` is the array of coefficients. `i` is the stage index (0 to r-1). -/
 def computableNTTStage [Fact (LinearIndependent 𝔽q β)]
@@ -180,7 +186,7 @@ def computableAdditiveNTT (a : Fin (2 ^ ℓ) → L) : Fin (2^(ℓ + R_rate)) →
   let b: Fin (2^(ℓ + R_rate)) → L := tileCoeffs a -- Note: can optimize on this
   Fin.foldl (n:=ℓ) (f:= fun current_b i  =>
     computableNTTStage (𝔽q := 𝔽q) (β := β) (ℓ := ℓ) (R_rate := R_rate)
-      (h_ℓ_add_R_rate := h_ℓ_add_R_rate) (i := ⟨ℓ - 1 - i, by omega⟩) (b:=current_b)
+      (h_ℓ_add_R_rate := h_ℓ_add_R_rate) (i := ⟨ℓ - i - 1, by omega⟩) (b:=current_b)
   ) (init:=b)
 
 /-- Array-backed coefficient tiling for the fast additive NTT path. -/
@@ -271,7 +277,7 @@ updates that buffer using the array transition from
 `computableNTTStageArray`. -/
 def computableAdditiveNTTFastStages : StateM (Array L) Unit := do
   let _ ← Fin.foldlM (m := StateM (Array L)) (n := ℓ) (f := fun (_ : Unit) i => do
-    let stage : Fin ℓ := ⟨ℓ - 1 - i, by omega⟩
+    let stage : Fin ℓ := ⟨ℓ - i - 1, by omega⟩
     let twiddles := computableTwiddleTableArray (β := β) (ℓ := ℓ)
       (R_rate := R_rate) (h_ℓ_add_R_rate := h_ℓ_add_R_rate) (i := stage)
     modifyThe (Array L) fun current =>
@@ -316,7 +322,7 @@ theorem hβ_lin_indep_concrete (k : ℕ) :
     letI := ConcreteBTFieldAlgebra (l:=0) (r:=k) (h_le:=by omega)
     LinearIndependent (R := ConcreteBTField 0)
       (v := computableBasisExplicit k) := by
-  letI := ConcreteBTFieldAlgebra (l:=0) (r:=k) (h_le:=by omega)
+  let := ConcreteBTFieldAlgebra (l:=0) (r:=k) (h_le:=by omega)
   have h_eq : computableBasisExplicit k = fun i => multilinearBasis 0 k (by omega) i := by
     funext i
     unfold computableBasisExplicit

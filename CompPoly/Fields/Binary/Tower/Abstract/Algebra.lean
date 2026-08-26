@@ -3,14 +3,17 @@ Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Chung Thai Nguyen
 -/
+module
 
-import CompPoly.Fields.Binary.Tower.Abstract.Core
+public import CompPoly.Fields.Binary.Tower.Abstract.Core
 
 /-!
 # Abstract Binary Tower Algebra
 
 Algebra maps and tower embeddings for the abstract binary tower fields.
 -/
+
+@[expose] public section
 
 namespace BinaryTower
 
@@ -95,7 +98,7 @@ lemma towerAlgebraMap_succ (l r : ℕ) (h_le : l ≤ r) :
   have h_l_ne_eq_r_add_1 : l ≠ r + 1 := by omega
   simp only [h_l_ne_eq_r_add_1, ↓reduceDIte, Nat.add_one_sub_one,
     eq_mp_eq_cast, RingHom.coe_comp, Function.comp_apply]
-  erw [cast_eq, towerAlgebraMap_succ_1]; congr 1
+  erw [cast_eq, towerAlgebraMap_succ_1]
 
 /-! Left associativity of the Tower Map -/
 theorem towerAlgebraMap_succ_last (r : ℕ) : ∀ l : ℕ, (h_le : l ≤ r) →
@@ -134,7 +137,8 @@ theorem BTField.RingHom_comp_cast {α β γ δ : ℕ} (f : BTField α →+* BTFi
   have h_heq : HEq ((cast (h1) g).comp f) (cast (h2) (g.comp f)) := by
     subst h -- this simplifies h1 h2 in cast which makes them trivial equality
       -- => hence it becomes easier to simplify
-    simp only [BTField, cast_eq, heq_eq_eq]
+    simp only [BTField, heq_eq_eq]
+    rfl
   apply eq_of_heq h_heq
 
 theorem towerAlgebraMap_assoc : ∀ r mid l : ℕ, (h_l_le_mid : l ≤ mid) → (h_mid_le_r : mid ≤ r) →

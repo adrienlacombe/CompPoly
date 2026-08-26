@@ -3,14 +3,17 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.Interpolation.LeeOSullivan.Algorithm
+public import CompPoly.Bivariate.GuruswamiSudan.Interpolation.LeeOSullivan.Algorithm
 
 /-!
 # Lee-O'Sullivan Correctness Common Helpers
 
 Basic facts shared by Lee-O'Sullivan soundness and completeness proofs.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -20,9 +23,9 @@ namespace LeeOSullivan
 
 open PolynomialMatrix
 
-variable {F : Type*} [Field F] [BEq F] [LawfulBEq F] [Nontrivial F] [DecidableEq F]
+variable {F : Type*} [Field F] [BEq F] [LawfulBEq F] [DecidableEq F]
 
-omit [Field F] [Nontrivial F] [DecidableEq F] in
+omit [Field F] [DecidableEq F] in
 /-- Executable distinct-`x` check agrees with the semantic predicate. -/
 theorem distinctXCoordinatesBool_iff {points : Array (F × F)} :
     distinctXCoordinatesBool points = true ↔ DistinctXCoordinates points := by
@@ -41,7 +44,6 @@ theorem distinctXCoordinatesBool_iff {points : Array (F × F)} :
         subst a
         exact h b hab
 
-omit [Nontrivial F] in
 /-- The coefficient-form `R` used by Lee evaluates to the packed values at distinct nodes. -/
 theorem leeCoefficientForm_eval_point
     (V : CPolynomial.VanishingPolynomialContext F)
@@ -53,7 +55,7 @@ theorem leeCoefficientForm_eval_point
       point.2 := by
   exact CPolynomial.interpolateCoefficientForm_eval_point V E hdistinct hpoint
 
-omit [Nontrivial F] [DecidableEq F] in
+omit [DecidableEq F] in
 /-- The vanishing `G` used by Lee vanishes on every listed `x`. -/
 theorem leeVanishing_eval_point
     (V : CPolynomial.VanishingPolynomialContext F)

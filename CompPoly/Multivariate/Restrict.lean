@@ -1,9 +1,13 @@
 /-
 Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Fawad Haider
+Authors: Fawad Haider, Pablo Martin
 -/
-import CompPoly.Multivariate.Operations
+module
+
+public import CompPoly.Multivariate.Operations
+public import CompPoly.Multivariate.MvPolyEquiv
+public import Mathlib.RingTheory.MvPolynomial.Basic
 
 /-!
 # Lemmas for `CMvPolynomial.restrictBy`, `restrictTotalDegree`, and `restrictDegree`
@@ -11,11 +15,11 @@ import CompPoly.Multivariate.Operations
 Degree-bounded restriction of multivariate polynomials: filtering monomials by total degree
 or per-variable degree bounds.
 
-## TODO
-- Prove correspondence with Mathlib via `fromCMvPolynomial`: e.g. that
-  `fromCMvPolynomial (restrictTotalDegree d p) ∈ MvPolynomial.restrictTotalDegree (Fin n) R d`
-  and similarly for `restrictDegree`. This would establish correctness wrt Mathlib's submodule API.
+Also proves correctness against Mathlib: transporting these restrictions across
+`fromCMvPolynomial` lands in Mathlib's degree-bounded submodules.
 -/
+
+@[expose] public section
 namespace CPoly
 
 open CMvPolynomial
@@ -125,7 +129,8 @@ lemma degreeOf_le_of_mem_monomials_restrictDegree {d : ℕ} {m : CMvMonomial n}
 private lemma list_ofFn_sum_eq_finSum {n : ℕ} (s : Fin n → ℕ) :
     (List.ofFn s).sum = ∑ i : Fin n, s i := by
   have hfin : (∑ x : Fin (List.ofFn s).length, (List.ofFn s)[x.1]) = (List.ofFn s).sum := by
-    simpa using (Fin.sum_univ_fun_getElem (l := List.ofFn s) (f := fun x : ℕ => x))
+    simpa [Function.comp_def] using
+      (Fin.sum_univ_fun_getElem (l := List.ofFn s) (f := fun x : ℕ => x))
   have hfin_get :
       (∑ x : Fin (List.ofFn s).length, s ⟨x.1, by simpa [List.length_ofFn] using x.2⟩) =
       (List.ofFn s).sum := by
@@ -186,6 +191,15 @@ lemma totalDegree_restrictTotalDegree_le
     totalDegree_le_of_mem_monomials_restrictTotalDegree (d := d) (p := p) hm
   simpa [totalDegree_eq_finsupp_sum (m := m)] using hmdeg
 
+/-- `restrictDegree d p` has `degreeOf i ≤ d` for each variable `i`. -/
+lemma degreeOf_restrictDegree_le (d : ℕ) (p : CMvPolynomial n R) (i : Fin n) :
+    (CMvPolynomial.restrictDegree d p).degreeOf i ≤ d := by
+  unfold CMvPolynomial.degreeOf
+  refine Finset.sup_le ?_
+  intro m hm
+  exact degreeOf_le_of_mem_monomials_restrictDegree
+    (d := d) (p := p) ((List.mem_toFinset).1 hm) i
+
 /-- `restrictTotalDegree d 0 = 0`. -/
 @[simp]
 lemma restrictTotalDegree_zero (d : ℕ) :
@@ -243,5 +257,26 @@ lemma restrictTotalDegree_restrictDegree_comm (d d' : ℕ) (p : CMvPolynomial n 
   ext m
   by_cases h₁ : m.totalDegree ≤ d <;> by_cases h₂ : ∀ i : Fin n, m.degreeOf i ≤ d' <;>
     simp [coeff_restrictTotalDegree, coeff_restrictDegree, h₁, h₂]
+
+/-! ### Correspondence with Mathlib's degree-bounded submodules -/
+
+/-- `fromCMvPolynomial (restrictTotalDegree d p) ∈ MvPolynomial.restrictTotalDegree (Fin n) R d`. -/
+theorem fromCMvPolynomial_restrictTotalDegree_mem {R : Type*} [CommSemiring R] [BEq R]
+    [LawfulBEq R] (d : ℕ) (p : CMvPolynomial n R) :
+    fromCMvPolynomial (CMvPolynomial.restrictTotalDegree d p) ∈
+      MvPolynomial.restrictTotalDegree (Fin n) R d := by
+  rw [MvPolynomial.mem_restrictTotalDegree, ← totalDegree_equiv (S := R)]
+  exact totalDegree_restrictTotalDegree_le d p
+
+/-- `fromCMvPolynomial (restrictDegree d p) ∈ MvPolynomial.restrictDegree (Fin n) R d`. -/
+theorem fromCMvPolynomial_restrictDegree_mem {R : Type*} [CommSemiring R] [BEq R]
+    [LawfulBEq R] (d : ℕ) (p : CMvPolynomial n R) :
+    fromCMvPolynomial (CMvPolynomial.restrictDegree d p) ∈
+      MvPolynomial.restrictDegree (Fin n) R d := by
+  rw [MvPolynomial.mem_restrictDegree_iff_sup]
+  intro i
+  rw [← MvPolynomial.degreeOf_def,
+    ← congrFun (degreeOf_equiv (S := R) (p := CMvPolynomial.restrictDegree d p)) i]
+  exact degreeOf_restrictDegree_le d p i
 
 end CPoly

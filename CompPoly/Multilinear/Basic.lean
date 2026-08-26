@@ -3,10 +3,12 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Chung Thai Nguyen
 -/
-import Mathlib.RingTheory.MvPolynomial.Basic
-import CompPoly.Data.List.Lemmas
-import CompPoly.Data.Vector.Basic
-import CompPoly.Data.Nat.Bitwise
+module
+
+public import Mathlib.RingTheory.MvPolynomial.Basic
+public import CompPoly.Data.List.Lemmas
+public import CompPoly.Data.Vector.Basic
+public import CompPoly.Data.Nat.Bitwise
 
 /-!
   # Multilinear Polynomials
@@ -25,6 +27,8 @@ import CompPoly.Data.Nat.Bitwise
   - A naive `O(4^n)` zeta spec `monoToLagrangeSpec` mirroring `lagrangeToMonoSpec`,
     plus equivalence `monoToLagrange = monoToLagrangeSpec`
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -157,7 +161,9 @@ def monomialBasis (w : Vector R n) : Vector R (2 ^ n) :=
   Vector.ofFn (fun i => ∏ j : Fin n, if (BitVec.ofFin i).getLsb j then w[j] else 1)
 
 @[simp]
-theorem monomialBasis_zero {w : Vector R 0} : monomialBasis w = #v[1] := by rfl
+theorem monomialBasis_zero {w : Vector R 0} : monomialBasis w = #v[1] := by
+  ext i hi
+  simp [monomialBasis]
 
 -- #eval monomialBasis #v[(1 : ℤ), 2, 3] (n := 3)
 -- #eval Nat.digits 2 8
@@ -177,8 +183,8 @@ private lemma monomial_basis_even {n : ℕ} (x : Vector R (n + 1)) (j : Fin (2 ^
   simp only [BitVec.getLsb_eq_getElem, Fin.getElem_fin, BitVec.getElem_ofFin]
   rw [Fin.prod_univ_succ]
   simp only [Fin.val_zero, Fin.val_succ]
-  rw [← Nat.bit_false_apply j.val, Nat.testBit_bit_zero]
-  simp only [Bool.false_eq_true, if_false, one_mul]
+  rw [← Nat.bit_false_apply j.val]
+  simp only [Nat.testBit_bit_zero, Bool.false_eq_true, if_false, one_mul]
   apply Finset.prod_congr rfl
   intro k _
   rw [Nat.testBit_bit_succ]
@@ -192,8 +198,8 @@ private lemma monomial_basis_odd {n : ℕ} (x : Vector R (n + 1)) (j : Fin (2 ^ 
   simp only [BitVec.getLsb_eq_getElem, Fin.getElem_fin, BitVec.getElem_ofFin]
   rw [Fin.prod_univ_succ]
   simp only [Fin.val_zero, Fin.val_succ]
-  rw [← Nat.bit_true_apply j.val, Nat.testBit_bit_zero]
-  simp only [if_true]
+  rw [← Nat.bit_true_apply j.val]
+  simp only [Nat.testBit_bit_zero, if_true]
   congr 1
   apply Finset.prod_congr rfl
   intro k _
@@ -206,14 +212,14 @@ def map {R S : Type*} [Semiring R] [Semiring S] (f : R →+* S)
 
 /-- One Horner reduction step, eliminating the next little-endian variable. -/
 @[inline, specialize]
-private def evalHornerStep [CommSemiring R] {n : ℕ}
+def evalHornerStep {n : ℕ}
     (coeffs : Vector R (2 ^ (n + 1))) (x0 : R) : Vector R (2 ^ n) :=
   Vector.ofFn fun j : Fin (2 ^ n) ↦
     coeffs.get ⟨2 * j.val, by omega⟩ + x0 * coeffs.get ⟨2 * j.val + 1, by omega⟩
 
 /-- Evaluate dense multilinear coefficients by eliminating one variable at a time. -/
 @[inline, specialize]
-private def evalHornerCoeffs [CommSemiring R] :
+def evalHornerCoeffs :
     {n : ℕ} → Vector R (2 ^ n) → Vector R n → R
   | 0, coeffs, _ => coeffs.get ⟨0, by norm_num⟩
   | n + 1, coeffs, x =>
@@ -270,7 +276,6 @@ private lemma eval_horner_step_dot_product {n : ℕ}
   rw [add_mul]
   congr 1
   rw [mul_comm x.head, mul_assoc]
-  rfl
 
 /-- Horner evaluation agrees with the dot-product evaluator. -/
 theorem eval_horner_eq_eval (p : CMlPolynomial R n) (x : Vector R n) :
@@ -406,7 +411,9 @@ def lagrangeBasis (w : Vector R n) : Vector R (2 ^ n) :=
   Vector.ofFn (fun i => ∏ j : Fin n, if (BitVec.ofFin i).getLsb j then w[j] else 1 - w[j])
 
 @[simp]
-theorem lagrangeBasis_zero {w : Vector R 0} : lagrangeBasis w = #v[1] := by rfl
+theorem lagrangeBasis_zero {w : Vector R 0} : lagrangeBasis w = #v[1] := by
+  ext i hi
+  simp [lagrangeBasis]
 
 -- #eval lagrangeBasis #v[(1 : ℤ), 2, 3] (n := 3)
 -- #eval Nat.digits 2 8
@@ -426,8 +433,8 @@ private lemma lagrange_basis_even {n : ℕ} (x : Vector R (n + 1)) (j : Fin (2 ^
   simp only [BitVec.getLsb_eq_getElem, Fin.getElem_fin, BitVec.getElem_ofFin]
   rw [Fin.prod_univ_succ]
   simp only [Fin.val_zero, Fin.val_succ]
-  rw [← Nat.bit_false_apply j.val, Nat.testBit_bit_zero]
-  simp only [Bool.false_eq_true, if_false]
+  rw [← Nat.bit_false_apply j.val]
+  simp only [Nat.testBit_bit_zero, Bool.false_eq_true, if_false]
   congr 1
   apply Finset.prod_congr rfl
   intro k _
@@ -442,8 +449,8 @@ private lemma lagrange_basis_odd {n : ℕ} (x : Vector R (n + 1)) (j : Fin (2 ^ 
   simp only [BitVec.getLsb_eq_getElem, Fin.getElem_fin, BitVec.getElem_ofFin]
   rw [Fin.prod_univ_succ]
   simp only [Fin.val_zero, Fin.val_succ]
-  rw [← Nat.bit_true_apply j.val, Nat.testBit_bit_zero]
-  simp only [if_true]
+  rw [← Nat.bit_true_apply j.val]
+  simp only [Nat.testBit_bit_zero, if_true]
   congr 1
   apply Finset.prod_congr rfl
   intro k _
@@ -457,7 +464,7 @@ def map {R S : Type*} [Semiring R] [Semiring S]
 
 /-- One multilinear-extension interpolation step, eliminating the next little-endian variable. -/
 @[inline, specialize]
-private def evalMleStep [CommRing R] {n : ℕ}
+def evalMleStep {n : ℕ}
     (values : Vector R (2 ^ (n + 1))) (x0 : R) : Vector R (2 ^ n) :=
   Vector.ofFn fun j : Fin (2 ^ n) ↦
     (1 - x0) * values.get ⟨2 * j.val, by omega⟩ +
@@ -465,7 +472,7 @@ private def evalMleStep [CommRing R] {n : ℕ}
 
 /-- Public multilinear-extension interpolation layer. -/
 @[inline, specialize]
-def evalMleLayer [CommRing R] {n : ℕ}
+def evalMleLayer {n : ℕ}
     (values : CMlPolynomialEval R (n + 1)) (x0 : R) : CMlPolynomialEval R n :=
   evalMleStep values x0
 
@@ -481,7 +488,7 @@ theorem evalMleLayer_get [CommRing R] {n : ℕ}
 
 /-- Evaluate hypercube values by recursively interpolating the multilinear extension. -/
 @[inline, specialize]
-private def evalMleValues [CommRing R] :
+def evalMleValues :
     {n : ℕ} → Vector R (2 ^ n) → Vector R n → R
   | 0, values, _ => values.get ⟨0, by norm_num⟩
   | n + 1, values, x =>
@@ -561,9 +568,7 @@ private lemma eval_mle_step_dot_product {n : ℕ}
   rw [add_mul]
   congr 1
   · rw [mul_comm (1 - x.head) (p.get ⟨2 * j.val, by omega⟩), mul_assoc]
-    rfl
   · rw [mul_comm x.head (p.get ⟨2 * j.val + 1, by omega⟩), mul_assoc]
-    rfl
 
 /-- Multilinear-extension interpolation agrees with the dot-product evaluator. -/
 theorem eval_mle_eq_eval (p : CMlPolynomialEval R n) (x : Vector R n) :
@@ -997,32 +1002,26 @@ def equivMonomialLagrangeRepr : CMlPolynomial R n ≃ CMlPolynomialEval R n wher
       subst h_n_eq_0; rfl
     else
       have h_n_ne_zero: n ≠ 0 := by omega
-      letI: NeZero n := by exact { out := h_n_eq_0 }
+      let: NeZero n := by exact { out := h_n_eq_0 }
       rw [lagrangeToMono_eq_lagrangeToMonoSegment (n:=n)]
       rw [monoToLagrange_eq_monoToLagrangeSegment (n:=n)]
       simp only [Fin.zero_eta]
       exact
         mobius_apply_zeta_apply_eq_id n
-          ⟨n - 1,
-            Decidable.byContradiction fun a ↦
-              monoToLagrange_eq_monoToLagrangeSegment._proof_1 n (NeZero.ne n) a⟩
+          ⟨n - 1, by have := NeZero.ne n; omega⟩
           0 v
   right_inv v := by
     if h_n_eq_0: n = 0 then
       subst h_n_eq_0; rfl
     else
       have h_n_ne_zero: n ≠ 0 := by omega
-      letI: NeZero n := by exact { out := h_n_eq_0 }
+      let: NeZero n := by exact { out := h_n_eq_0 }
       rw [lagrangeToMono_eq_lagrangeToMonoSegment (n:=n)]
       rw [monoToLagrange_eq_monoToLagrangeSegment (n:=n)]
       exact
         zeta_apply_mobius_apply_eq_id n
-          ⟨n - 1,
-            Decidable.byContradiction fun a ↦
-              monoToLagrange_eq_monoToLagrangeSegment._proof_1 n (NeZero.ne n) a⟩
-          ⟨0,
-            Decidable.byContradiction fun a ↦
-              monoToLagrange_eq_monoToLagrangeSegment._proof_2 n (NeZero.ne n) a⟩
+          ⟨n - 1, by have := NeZero.ne n; omega⟩
+          ⟨0, by have := NeZero.ne n; omega⟩
           v
 
 end CMlPolynomial

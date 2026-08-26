@@ -3,8 +3,10 @@ Copyright (c) 2025 CompPoly, Elias Judin, Harmonic. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Elias Judin, Aristotle (Harmonic)
 -/
-import Mathlib.LinearAlgebra.Lagrange
-import CompPoly.Univariate.Lagrange
+module
+
+public import Mathlib.LinearAlgebra.Lagrange
+public import CompPoly.Univariate.Lagrange
 
 /-!
 # Barycentric Interpolation
@@ -31,6 +33,8 @@ for univariate computable polynomials.
 * `eval_eq_interpolate_eval` – variant in terms of `Lagrange.interpolate`.
 * `ofPow_eval_eq_interpolatePow_eval` – specialization to `CLagrange.interpolatePow`.
 -/
+
+@[expose] public section
 
 open Finset
 
@@ -138,6 +142,7 @@ theorem BarycentricDomain.eval_eq_interpolate_eval (dom : BarycentricDomain R n)
   · rcases n with ( _ | n ) <;> simp_all +decide [ BarycentricDomain.eval ];
     convert BarycentricDomain.eval_off_node_eq dom y z
       (fun i => Ne.symm (hz i)) (Nat.succ_pos n) using 1
+    simp [Lagrange.interpolate]
 
 /-- The barycentric evaluator equals
 `(CLagrange.interpolate Finset.univ dom.nodes y).eval z`. -/

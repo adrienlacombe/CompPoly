@@ -3,16 +3,19 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.Bivariate.GuruswamiSudan.Root.Alekhnovich.Correctness
-import CompPoly.Bivariate.GuruswamiSudan.Root.RothRuckenstein.Correctness
-import Mathlib.Algebra.Field.ZMod
+public meta import CompPoly.Bivariate.GuruswamiSudan.Root.Alekhnovich.Correctness
+public meta import CompPoly.Bivariate.GuruswamiSudan.Root.RothRuckenstein.Correctness
+public meta import Mathlib.Algebra.Field.ZMod
 
 /-!
 # Alekhnovich Root Tests
 
 Regression coverage for the Alekhnovich bounded bivariate root backend.
 -/
+
+public meta section
 
 namespace CompPolyTests
 
@@ -52,8 +55,8 @@ private def f3Elements : Array F3 :=
 
 private theorem f3Elements_complete : ContainsAllFieldElements f3Elements := by
   unfold ContainsAllFieldElements
-  intro a
-  fin_cases a <;> decide
+    CPolynomial.Roots.FiniteField.ContainsAllFieldElements
+  decide
 
 private def fieldRoots : FieldRootContext F3 :=
   enumeratingFieldRootContext F3 f3Elements f3Elements_complete
@@ -63,8 +66,8 @@ private def f5Elements : Array F5 :=
 
 private theorem f5Elements_complete : ContainsAllFieldElements f5Elements := by
   unfold ContainsAllFieldElements
-  intro a
-  fin_cases a <;> decide
+    CPolynomial.Roots.FiniteField.ContainsAllFieldElements
+  decide
 
 private def f5FieldRoots : FieldRootContext F5 :=
   enumeratingFieldRootContext F5 f5Elements f5Elements_complete

@@ -3,7 +3,10 @@ Copyright (c) 2026 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Juan Conejero
 -/
-import CompPoly.Univariate.ToPoly.Impl
+module
+
+import all CompPoly.Univariate.ToPoly.Impl
+public import CompPoly.Univariate.ToPoly.Impl
 
 /-!
 # Reed-Solomon Codes
@@ -22,6 +25,8 @@ points and a message length `k`. The codeword for a message `(m₀, ..., mₖ₋
 * `messagePoly`, `encode`: the message polynomial of a coefficient vector and the encoder
   evaluating it on the domain.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -54,8 +59,9 @@ def messagePoly [Zero F] [BEq F] [LawfulBEq F]
 /-- `(messagePoly msg).degree < k`. -/
 lemma messagePoly_degree_lt [Zero F] [BEq F] [LawfulBEq F] {k : ℕ} (msg : Vector F k) :
     (messagePoly msg).degree < k :=
-  CPolynomial.mem_degreeLT_iff_size_le.mpr
-    ((CPolynomial.Raw.Trim.size_le_size msg.toArray).trans_eq msg.size_toArray)
+  CPolynomial.mem_degreeLT.mp <|
+    CPolynomial.mem_degreeLT_iff_size_le.mpr
+      ((CPolynomial.Raw.Trim.size_le_size msg.toArray).trans_eq msg.size_toArray)
 
 /-- `messagePoly` recovers a `CPolynomial` of degree `< k` from its bounded coefficient vector. -/
 lemma messagePoly_ofFn_coeff [Semiring F] [BEq F] [LawfulBEq F] (k : ℕ) (f : CPolynomial F)

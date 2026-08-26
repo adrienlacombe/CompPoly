@@ -17,6 +17,11 @@ lake exe cache get
 lake build
 ```
 
+`lake exe cache get` covers Mathlib and its dependencies, which is the expensive half.
+It does not cover CompPoly's own modules; `lake build` compiles those. Downstream
+projects that depend on CompPoly do get its prebuilt oleans automatically — see
+[`build-cache.md`](build-cache.md).
+
 ## Validation By Change Type
 
 ### Existing Lean files only
@@ -68,18 +73,50 @@ lake build CompPolyBench
 lake exe CompPolyBench --medium
 ```
 
+CI runs a curated subset rather than the full suite, so a new benchmark group must
+be added to `BENCH_CI_GROUPS` in
+[`../../.github/workflows/lean_action_ci.yml`](../../.github/workflows/lean_action_ci.yml)
+to be covered there. See [`../../bench/README.md`](../../bench/README.md).
+
 ## CI Mapping
 
 - [`../../.github/workflows/lean_action_ci.yml`](../../.github/workflows/lean_action_ci.yml)
-  runs a clean build, warm rebuild, and `lake test`, then posts a build-timing
-  report. It also builds and runs `CompPolyBench --medium`, then uploads benchmark
-  reports as CI artifacts.
+  runs a **warm** (incremental) `lake build` by default — reusing cached Lake
+  oleans so only dirty modules rebuild — then `lake test`, and posts a
+  build-timing report. It also builds and runs `CompPolyBench --medium` over the curated
+  `BENCH_CI_GROUPS` selection, then uploads benchmark reports as CI artifacts.
+  A full cold rebuild (`rm -rf .lake/build && lake build`) runs automatically
+  when `lean-toolchain` or `lake-manifest.json` differs from the comparison base
+  (PR base, previous push tip, or merge-base with `main` on manual dispatch).
+  You can also force a clean via **Actions → Lean Action CI → Run workflow** with
+  the `clean_build` input. Ordinary source-only PR/push runs stay warm.
+  Two Actions caches feed the warm path: `.lake/packages` keyed on
+  `lean-toolchain` plus `lake-manifest.json`, and `.lake/build` keyed additionally
+  per commit. A dependency-cache miss is not expensive, because `lean-action` runs
+  `lake exe cache get` for us, so Mathlib's oleans are downloaded rather than
+  compiled.
 - [`../../.github/workflows/linting.yml`](../../.github/workflows/linting.yml) runs
   the style linter on changed `.lean` files in PRs and push builds.
 - [`../../.github/workflows/check_imports.yml`](../../.github/workflows/check_imports.yml)
   checks that `CompPoly.lean` matches the tracked source tree.
 - [`../../.github/workflows/docs-integrity.yml`](../../.github/workflows/docs-integrity.yml)
-  checks the `CLAUDE.md` symlink and local markdown links.
+  checks the `CLAUDE.md` symlink, local markdown links, and backticked file paths
+  in the docs.
+
+Four further workflows exist that are not part of the pass/fail gate:
+
+- [`../../.github/workflows/summary.yml`](../../.github/workflows/summary.yml)
+  posts a PR summary on open and on every new commit. It runs under
+  `pull_request_target` and never builds or executes PR code — it reads the diff
+  and committed source as data — which is what makes that safe for fork PRs.
+- [`../../.github/workflows/review.yml`](../../.github/workflows/review.yml) runs a
+  PR review **on demand only**, triggered by a `/review` comment from a repo
+  member. It is deliberately not run on PR open, because the review path builds and
+  elaborates the PR's Lean code with secrets in scope.
+- [`../../.github/workflows/update_lean_project.yml`](../../.github/workflows/update_lean_project.yml)
+  bumps the Lean toolchain and dependencies nightly, and can be dispatched manually.
+- [`../../.github/workflows/lean_release_tag.yml`](../../.github/workflows/lean_release_tag.yml)
+  adds a release tag when `lean-toolchain` changes on `main`.
 
 ## Lower-Level Commands
 

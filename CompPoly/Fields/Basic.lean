@@ -3,9 +3,11 @@ Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: František Silváši, Julian Sutherland, Ilia Vlasov
 -/
-import Mathlib.Algebra.Polynomial.FieldDivision
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.LinearCombination
+module
+
+public import Mathlib.Algebra.Polynomial.FieldDivision
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.LinearCombination
 
 /-!
 # Non-binary fields and polynomial utilities
@@ -13,6 +15,8 @@ import Mathlib.Tactic.LinearCombination
 This module defines `NonBinaryField` (fields with char ≠ 2) and provides lemmas about
 polynomial composition with `-X` and `X²`.
 -/
+
+@[expose] public section
 
 /-- A type class for fields of characteristic ≠ 2, extending `Field`. -/
 class NonBinaryField (F : Type*) extends Field F where
@@ -59,8 +63,12 @@ private lemma comp_x_square_coeff_pos_deg {f : Polynomial F} {n : ℕ} (h : 0 < 
     (f.comp (X * X)).coeff n = if Even n then f.coeff (n / 2) else 0 := by
   revert n
   apply degree_pos_induction_on (h0 := h) (P := fun f => _)
-  · rintro _ _ (_ | n) <;>
-    aesop (add simp [coeff_X, Even]) (add safe [(by existsi 1), (by omega)])
+  · rintro a _ n
+    have hcomp : (C a * X).comp (X * X) = C a * X ^ 2 := by simp [sq]
+    rw [hcomp, coeff_C_mul, coeff_X_pow, coeff_C_mul, coeff_X]
+    simp only [Nat.even_iff]
+    split_ifs <;> simp_all
+    omega
   · rintro _ _ _ (_ | _ | n) <;> try simp [←mul_assoc]
     have : (n + 1 + 1) / 2 = n / 2 + 1 := by omega
     split <;> aesop (add safe (by omega)) (add simp [Nat.even_iff])

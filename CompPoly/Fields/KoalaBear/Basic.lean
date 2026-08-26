@@ -3,18 +3,21 @@ Copyright (c) 2024 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Valerii Huhnin
 -/
+module
 
-import CompPoly.Fields.Basic
-import CompPoly.Fields.PrattCertificate
-import Mathlib.Algebra.Order.Ring.Star
-import Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots
-import Mathlib.FieldTheory.Finite.Basic
+public import CompPoly.Fields.Basic
+public import CompPoly.Fields.PrattCertificate
+public import Mathlib.Algebra.Order.Ring.Star
+public import Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots
+public import Mathlib.FieldTheory.Finite.Basic
 
 /-!
   # KoalaBear Field `2^{31} - 2^{24} + 1`
 
   This is the field used for lean Ethereum spec.
 -/
+
+@[expose] public section
 
 namespace KoalaBear
 
@@ -126,7 +129,6 @@ def twoAdicGenerators : List Field :=
 
 /-! Statements requested by the Python spec translation. -/
 
-set_option maxRecDepth 4096 in
 /-- Fermat-style inversion in `ZMod fieldSize`. -/
 lemma inv_eq_pow (a : Field) (ha : a ≠ 0) : a⁻¹ = a ^ (fieldSize - 2) := by
   have hcard : Fintype.card Field = fieldSize := ZMod.card fieldSize
@@ -216,7 +218,11 @@ lemma twoAdicGenerators_pow_twoPow_eq_one (bits : Fin (twoAdicity + 1)) :
   have hshift :
       sqChain twoAdicGenerators[(⟨n, hn⟩ : Fin (twoAdicity + 1))] n =
         twoAdicGenerators[(⟨0, by omega⟩ : Fin (twoAdicity + 1))] := by
-    simpa using sqChain_twoAdicGenerators_shift 0 n (by omega)
+    have hidx : (⟨0 + n, by omega⟩ : Fin (twoAdicity + 1)) = ⟨n, hn⟩ := by
+      ext
+      simp
+    convert sqChain_twoAdicGenerators_shift 0 n (by omega) using 2
+    · exact (congrArg (fun i => twoAdicGenerators[i]) hidx).symm
   simpa [twoAdicGenerators] using hshift
 
 /-- Helper: Fin-indexed version for computational verification of non-triviality. -/
@@ -289,13 +295,11 @@ lemma twoAdicGenerators_order (bits : Fin (twoAdicity + 1)) :
 /-- Primitive generator used by the smooth field-root splitter. -/
 def primitiveRoot : Field := (3 : Field)
 
-set_option maxRecDepth 100000 in
 /-- `primitiveRoot ^ 127` is the maximal two-adic generator. -/
 private lemma primitiveRoot_pow_127_eq_twoAdicGenerator :
-    primitiveRoot ^ 127 =
-      twoAdicGenerators[(⟨twoAdicity, by omega⟩ : Fin (twoAdicity + 1))] := by
-  unfold primitiveRoot twoAdicity
-  decide
+    primitiveRoot ^ 127 = twoAdicGenerators[twoAdicity] := by
+  norm_num [primitiveRoot, twoAdicity, twoAdicGenerators]
+  rfl
 
 /-- `primitiveRoot ^ 2^twoAdicity` is nontrivial. -/
 private lemma primitiveRoot_pow_twoAdicity_ne_one :

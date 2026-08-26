@@ -3,13 +3,18 @@ Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Gregor Mitscha-Baude, Derek Sorensen
 -/
-import CompPoly.Univariate.ToPoly.Core
+module
+
+import all CompPoly.Univariate.ToPoly.Core
+public import CompPoly.Univariate.ToPoly.Core
 
 /-!
 # `toPoly` Equivalence
 
 Ring equivalences between computable univariate polynomials and `Polynomial`.
 -/
+
+public section
 
 open Polynomial
 
@@ -126,6 +131,7 @@ lemma Raw.toPoly_pow [LawfulBEq R] (p : CPolynomial.Raw R) :
 @[simp, grind =]
 lemma Raw.toPoly_zero {R : Type*} [Semiring R] : (0 : CPolynomial.Raw R).toPoly = 0 := by
   simp [Raw.toPoly, Raw.eval₂]
+  rfl
 
 lemma toPoly_zero {R : Type*} [Semiring R] : (0 : CPolynomial R).toPoly = 0 := by
   apply Raw.toPoly_zero
@@ -175,6 +181,12 @@ noncomputable def ringEquiv [LawfulBEq R] [Nontrivial R] :
     apply toPoly_toImpl
   map_mul' := by intros p q; rw [toPoly_mul p q]
   map_add' := by intros p q; apply toPoly_add
+
+/-- The forward map of `ringEquiv` is `toPoly`. -/
+@[simp]
+theorem ringEquiv_apply [LawfulBEq R] [Nontrivial R] (p : CPolynomial R) :
+    ringEquiv p = p.toPoly := by
+  rfl
 
 end RingEquiv
 

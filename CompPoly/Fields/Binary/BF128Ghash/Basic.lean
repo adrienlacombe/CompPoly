@@ -3,8 +3,9 @@ Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chung Thai Nguyen, Quang Dao
 -/
+module
 
-import CompPoly.Fields.Binary.BF128Ghash.XPowTwoPowGcdCertificate
+public import CompPoly.Fields.Binary.BF128Ghash.XPowTwoPowGcdCertificate
 
 /-!
 # BinaryField128Ghash
@@ -41,6 +42,8 @@ Thus, we only need to check:
 
 -/
 
+@[expose] public section
+
 namespace BF128Ghash
 open Polynomial AdjoinRoot
 noncomputable section
@@ -64,7 +67,7 @@ lemma irreducible_of_rabin_128_passed_over_GF2 (P : Polynomial (ZMod 2))
     (h_gcd : EuclideanDomain.gcd ((X : Polynomial (ZMod 2)) ^ (2 ^ 64) + X) P = 1) :
     Irreducible P := by
   have h_ringCharZmod2 : ringChar (ZMod 2) = 2 := by exact ZMod.ringChar_zmod_n 2
-  letI : Fact (Nat.Prime (ringChar (ZMod 2))) := by exact Fact.mk (by
+  let : Fact (Nat.Prime (ringChar (ZMod 2))) := by exact Fact.mk (by
     rw [h_ringCharZmod2]; exact Nat.prime_two)
   -- Proof by Contradiction: Assume P is reducible.
   by_contra h_red
@@ -133,7 +136,7 @@ lemma irreducible_of_rabin_128_passed_over_GF2 (P : Polynomial (ZMod 2))
 - `X_pow_2_pow_128_eq`: X^(2^128) = X (mod ghashPoly)
 - `rabin_gcd_condition_gHashPoly`: EuclideanDomain.gcd(X^(2^64) + X, ghashPoly) = 1 -/
 theorem ghashPoly_irreducible : Irreducible ghashPoly := by
-  letI : GCDMonoid (Polynomial (ZMod 2)) := by apply EuclideanDomain.gcdMonoid
+  let : GCDMonoid (Polynomial (ZMod 2)) := by apply EuclideanDomain.gcdMonoid
   apply irreducible_of_rabin_128_passed_over_GF2
   · exact ghashPoly_natDegree
   · -- Trace Condition: ghashPoly | X^(2^128) + X
@@ -175,7 +178,7 @@ instance : Algebra (ZMod 2) BF128Ghash := AdjoinRoot.instAlgebra ghashPoly
 
 /-- BF128Ghash has characteristic 2. -/
 instance : CharP BF128Ghash 2 := by
-  haveI : CharP (ZMod 2) 2 := inferInstance
+  have : CharP (ZMod 2) 2 := inferInstance
   apply charP_of_injective_algebraMap' (ZMod 2) 2
 
 /-- The canonical embedding of GF(2) into BF128Ghash. -/
@@ -187,12 +190,15 @@ def root : BF128Ghash := AdjoinRoot.root ghashPoly
 /-- The root satisfies the GHASH polynomial equation:
     root^128 + root^7 + root^2 + root + 1 = 0 -/
 theorem root_satisfies_poly : root^128 + root^7 + root^2 + root + 1 = 0 := by
-  unfold root ghashPoly
-  have h := AdjoinRoot.eval₂_root ghashPoly
-  unfold ghashPoly at h
-  simp only [eval₂_add, eval₂_X, eval₂_one] at h
-  erw [eval₂_pow, eval₂_X, eval₂_pow, eval₂_X, eval₂_pow, eval₂_X] at h
-  exact h
+  calc
+    _ = (AdjoinRoot.mk ghashPoly X)^128 + (AdjoinRoot.mk ghashPoly X)^7 +
+        (AdjoinRoot.mk ghashPoly X)^2 + AdjoinRoot.mk ghashPoly X + 1 := by
+      simp only [root, AdjoinRoot.mk_X]
+    _ = AdjoinRoot.mk ghashPoly (X^128 + X^7 + X^2 + X + 1) := by
+      rw [map_add, map_add, map_add, map_add, map_pow, map_pow, map_pow, map_one]
+    _ = 0 := by
+      change AdjoinRoot.mk ghashPoly ghashPoly = 0
+      exact AdjoinRoot.mk_self
 
 /-- BF128Ghash is a finite type. -/
 instance : Fintype BF128Ghash := by
@@ -204,6 +210,7 @@ instance : Fintype BF128Ghash := by
     exact Finite.of_equiv (Fin pb.dim →₀ ZMod 2) (pb.basis.repr.toEquiv.symm)
   exact Fintype.ofFinite BF128Ghash
 
+set_option maxRecDepth 3000 in
 /-- The cardinality of BF128Ghash is 2^128. -/
 theorem BF128Ghash_card : Fintype.card BF128Ghash = 2^128 := by
   -- Use the fact that AdjoinRoot of an irreducible polynomial of degree d

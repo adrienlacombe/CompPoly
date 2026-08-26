@@ -3,8 +3,9 @@ Copyright (c) 2026 CompPoly Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Valerii Huhnin
 -/
+module
 
-import CompPoly.LinearAlgebra.PolynomialMatrix.MuldersStorjohannCorrectness.Minimal
+public import CompPoly.LinearAlgebra.PolynomialMatrix.MuldersStorjohannCorrectness.Minimal
 
 /-!
 # Fast Mulders-Storjohann Reduction Agrees With the Direct Definition
@@ -14,6 +15,8 @@ leading terms through the fused `rowSubScaledShift` update. This file proves it
 extensionally equal to `muldersStorjohannReduce`, so every correctness result
 transfers, and packages it as a certified `ShiftedRowReducerContext`.
 -/
+
+@[expose] public section
 
 namespace CompPoly
 
@@ -73,8 +76,8 @@ theorem cancelShiftedLeadingTermFast_eq (target reducer : PolynomialRow F)
 
 /-! ### Cached conflict scan -/
 
-omit [Field F] [LawfulBEq F] [DecidableEq F] in
-theorem rowLeadingPositions_size [Zero F] (M : PolynomialMatrix F)
+omit [LawfulBEq F] [DecidableEq F] in
+theorem rowLeadingPositions_size (M : PolynomialMatrix F)
     (shift : Array Nat) :
     (rowLeadingPositions M shift).size = M.size := by
   simp [rowLeadingPositions]
