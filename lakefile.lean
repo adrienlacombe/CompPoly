@@ -21,7 +21,7 @@ package CompPoly where
   -- prioritize it when resolving toolchains for downstream projects.
   fixedToolchain := true
 
-require "leanprover-community" / mathlib @ git "v4.33.0"
+require "leanprover-community" / mathlib @ git "v4.33.1"
 
 @[default_target]
 lean_lib CompPoly where
@@ -41,3 +41,11 @@ lean_lib CompPolyBenchLib where
 
 lean_exe CompPolyBench where
   srcDir := "bench"
+
+/-- Kernel-level axiom / `sorry` accounting with a committed regression baseline
+(`scripts/axiom_baseline.json`). Runtime-imports the built CompPoly oleans, so run it
+after `lake build`. See `scripts/AxiomSweep.lean`. -/
+lean_exe axiomsweep where
+  srcDir := "scripts"
+  root := `AxiomSweep
+  supportInterpreter := true
