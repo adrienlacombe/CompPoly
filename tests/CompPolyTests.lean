@@ -39,6 +39,7 @@ public import CompPolyTests.Fields.Extension.Arithmetic
 public import CompPolyTests.Fields.Extension.Binomial
 public import CompPolyTests.Fields.Goldilocks.Fast
 public import CompPolyTests.Fields.KoalaBear.Fast
+public import CompPolyTests.Fields.Mersenne31.Circle
 public import CompPolyTests.Fields.Mersenne31.Fast
 public import CompPolyTests.Fields.Mersenne31.Instances
 public import CompPolyTests.Fields.Pasta.Fast
