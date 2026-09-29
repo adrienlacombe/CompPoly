@@ -7,7 +7,7 @@ module
 
 public import Batteries.Data.Vector.Lemmas
 public import CompPoly.Data.List.Lemmas
-public import CompPoly.Multivariate.CMvPolynomial
+public import CompPoly.Multivariate.Basic
 public import Mathlib.Algebra.MvPolynomial.Basic
 public import Mathlib.Algebra.MvPolynomial.Equiv
 public import Mathlib.Algebra.Ring.Defs
@@ -91,7 +91,7 @@ omit [BEq R] [LawfulBEq R] in
 theorem fromCMvPolynomial_toCMvPolynomial {p : MvPolynomial (Fin n) R} :
     fromCMvPolynomial (toCMvPolynomial p) = p := by
   dsimp [fromCMvPolynomial, toCMvPolynomial, toCMvPolynomial, fromCMvPolynomial]
-  ext m; simp [MvPolynomial.coeff]
+  ext m; simp
   rcases p with ⟨s, f, hf⟩
   simp only [Finsupp.coe_mk]
   generalize eq : (ExtTreeMap.ofList _ _) = p
@@ -119,7 +119,7 @@ lemma fromCMvPolynomial_injective : Function.Injective (@fromCMvPolynomial n R _
 
 omit [BEq R] [LawfulBEq R] in
 lemma coeff_eq {m} (a : CMvPolynomial n R) :
-    MvPolynomial.coeff m (fromCMvPolynomial a) = a.coeff (CMvMonomial.ofFinsupp m) := by
+    (fromCMvPolynomial a).coeff m = a.coeff (CMvMonomial.ofFinsupp m) := by
   rfl
 
 @[aesop simp]

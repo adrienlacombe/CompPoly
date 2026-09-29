@@ -1,7 +1,8 @@
 /-
 Copyright (c) 2025 CompPoly. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Quang Dao, Gregor Mitscha-Baude, Derek Sorensen, Desmond Coles, Valerii Huhnin
+Authors: Quang Dao, Gregor Mitscha-Baude, Derek Sorensen, Desmond Coles, Valerii Huhnin,
+         Julian Sutherland
 -/
 module
 
@@ -199,6 +200,20 @@ theorem coeff_ofArray [Zero R] [BEq R] [LawfulBEq R]
   unfold CPolynomial.coeff CPolynomial.ofArray
   rw [CPolynomial.Raw.Trim.coeff_eq_coeff]
 
+/-- Construct a canonical polynomial from a coefficient function `Fin n → R`.
+
+  Index `i` gives the coefficient of `X^i`; the resulting array is trimmed to remove
+  trailing zeros. -/
+def ofFn [Zero R] [BEq R] [LawfulBEq R] {n : ℕ} (f : Fin n → R) : CPolynomial R :=
+  ofArray (Array.ofFn f)
+
+/-- Coefficients of `ofFn` are the source function entries below `n`, and zero at or above `n`. -/
+theorem coeff_ofFn [Zero R] [BEq R] [LawfulBEq R] {n : ℕ} (f : Fin n → R) (i : ℕ) :
+    (CPolynomial.ofFn f).coeff i = if h : i < n then f ⟨i, h⟩ else 0 := by
+  rw [ofFn, coeff_ofArray]
+  simp only [Array.getD_eq_getD_getElem?, Array.getElem?_ofFn]
+  split <;> simp_all
+
 /-- The constant polynomial `C r`. -/
 def C [Zero R] [BEq R] [LawfulBEq R] (r : R) : CPolynomial R :=
   ⟨(Raw.C r).trim, Trim.isCanonical_trim (Raw.C r)⟩
@@ -274,6 +289,18 @@ theorem eval_horner_eq_eval [Semiring R] (x : R) (p : CPolynomial R) :
     evalHorner x p = eval x p := by
   simpa [eval, evalHorner, eval₂, eval₂Horner] using
     (eval₂_horner_eq_eval₂ (f := RingHom.id R) (x := x) (p := p))
+
+/-- Compiled code evaluates by Horner's method; `eval₂` remains the specification. -/
+@[csimp]
+theorem eval₂_eq_eval₂Horner : @eval₂ = @eval₂Horner := by
+  funext _ _ _ _ f x p
+  exact (eval₂_horner_eq_eval₂ f x p).symm
+
+/-- Compiled code evaluates by Horner's method; `eval` remains the specification. -/
+@[csimp]
+theorem eval_eq_evalHorner : @eval = @evalHorner := by
+  funext _ _ x p
+  exact (eval_horner_eq_eval x p).symm
 
 /-- The support of a polynomial: indices with nonzero coefficients. -/
 def support [Zero R] [BEq R] (p : CPolynomial R) : Finset ℕ :=
@@ -435,6 +462,9 @@ theorem natDegree_C [Zero R] [BEq R] [LawfulBEq R] (r : R) :
       conv_lhs => rw [show #[r] = (#[] : Array R).push r from rfl]
       rw [Trim.push_trim #[] r hr]
       simp
+
+theorem natDegree_zero [Zero R] [BEq R] [LawfulBEq R] :
+    (0 : CPolynomial R).natDegree = 0 := by rfl
 
 /-- The support of a constant polynomial `C r` is `{0}`. -/
 theorem support_C [Zero R] [BEq R] [LawfulBEq R] {r : R} (hr : r ≠ 0) :
@@ -772,6 +802,7 @@ theorem degree_eq_natDegree [Zero R] (p : CPolynomial R) (hp : p ≠ 0) :
       rw [hdeg, hnat]
 
 /-- Lemma for computing the degree of 0 in proofs. -/
+@[simp]
 lemma degree_zero [Zero R] : degree (0 : CPolynomial R) = ⊥ := by
   rfl
 
@@ -817,6 +848,12 @@ theorem le_natDegree_of_ne_zero [Zero R] [BEq R] [LawfulBEq R]
     i ≤ p.natDegree := by
   rw [natDegree_eq_support_sup]
   exact Finset.le_sup (f := fun n => n) ((mem_support_iff p i).mpr h)
+
+/-- A coefficient above the `natDegree` is zero. -/
+theorem coeff_eq_zero_of_natDegree_lt [Zero R] [BEq R] [LawfulBEq R]
+    {p : CPolynomial R} {i : ℕ} (h : p.natDegree < i) : coeff p i = 0 := by
+  by_contra hne
+  exact (le_natDegree_of_ne_zero hne).not_gt h
 
 /-- The natDegree of a sum is at most the max of the natDegrees. -/
 theorem natDegree_add_le [Semiring R] [DecidableEq R]
@@ -1085,6 +1122,36 @@ lemma coeff_finset_sum [Semiring R] [BEq R] [LawfulBEq R]
   | empty => simp only [Finset.sum_empty, coeff_zero]
   | insert _ _ hna ih => rw [Finset.sum_insert hna, coeff_add, ih, Finset.sum_insert hna]
 
+/-! ### Polynomials from a finite coefficient function -/
+
+/-- Extracting the `k`-th coefficient as an additive homomorphism. -/
+@[expose]
+def coeffHom [Semiring R] [BEq R] [LawfulBEq R] (k : ℕ) : CPolynomial R →+ R where
+  toFun p := p.coeff k
+  map_zero' := coeff_zero k
+  map_add' p q := coeff_add p q k
+
+@[simp] theorem coeffHom_apply [Semiring R] [BEq R] [LawfulBEq R] (k : ℕ) (p : CPolynomial R) :
+    coeffHom k p = p.coeff k := rfl
+
+/-- The polynomial with prescribed finite coefficient function: `Σ_{k<N} cₖ Xᵏ`. -/
+def ofFinCoeff [Semiring R] [BEq R] [LawfulBEq R] [DecidableEq R] (N : ℕ) (c : ℕ → R) :
+    CPolynomial R :=
+  ∑ k ∈ Finset.range N, monomial k (c k)
+
+@[simp] theorem coeff_ofFinCoeff [Semiring R] [BEq R] [LawfulBEq R] [DecidableEq R]
+    (N : ℕ) (c : ℕ → R) (j : ℕ) :
+    (ofFinCoeff N c).coeff j = if j < N then c j else 0 := by
+  rw [ofFinCoeff, coeff_finset_sum]
+  simp only [coeff_monomial]
+  rw [Finset.sum_ite_eq (Finset.range N) j (fun k => c k)]
+  simp
+
+/-- A monomial with zero coefficient is the zero polynomial. -/
+theorem monomial_eq_zero [Semiring R] [BEq R] [LawfulBEq R] [DecidableEq R] (n : ℕ) :
+    (monomial n (0 : R) : CPolynomial R) = 0 :=
+  eq_zero_iff_coeff_zero.mpr (fun j => by rw [coeff_monomial]; split_ifs <;> rfl)
+
 end Semiring
 
 section CommSemiring
@@ -1132,9 +1199,9 @@ lemma coeff_erase [Zero R] [BEq R] [LawfulBEq R]
     Array.getD_eq_getD_getElem?, Array.getD_eq_getD_getElem?,
     Array.getElem?_setIfInBounds]
   by_cases hni : i = n
-  · rw [if_pos hni.symm, if_pos hni]
+  · rw [ite_eq_left hni.symm, ite_eq_left hni]
     split <;> rfl
-  · rw [if_neg hni, if_neg (fun h => hni h.symm)]
+  · rw [ite_eq_right hni, ite_eq_right (fun h => hni h.symm)]
 
 /-- Leading coefficient equals the coefficient at `natDegree`. -/
 lemma leadingCoeff_eq_coeff_natDegree [Zero R] (p : CPolynomial R) :
@@ -1162,9 +1229,9 @@ lemma monomial_add_erase [Ring R] [BEq R] [LawfulBEq R] [DecidableEq R]
   rw [coeff_add, coeff_monomial, coeff_erase]
   by_cases hi : i = p.natDegree
   · subst hi
-    rw [if_pos rfl, if_pos rfl, leadingCoeff_eq_coeff_natDegree]
+    rw [ite_eq_left rfl, ite_eq_left rfl, leadingCoeff_eq_coeff_natDegree]
     simp
-  · rw [if_neg hi, if_neg hi]
+  · rw [ite_eq_right hi, ite_eq_right hi]
     simp
 
 lemma coeff_neg [Ring R] [BEq R] [LawfulBEq R]
@@ -1200,7 +1267,7 @@ theorem subMulMonomial_eq [Ring R] [BEq R] [LawfulBEq R] [DecidableEq R]
     rw [coeff_sub, coeff_monomial_mul]
   rw [subMulMonomial]
   by_cases hguard : c == 0 || b == 0
-  · rw [if_pos hguard, eq_iff_coeff]
+  · rw [ite_eq_left hguard, eq_iff_coeff]
     intro i
     rw [hcoeff i]
     rcases Bool.or_eq_true_iff.mp hguard with hc | hb
@@ -1209,7 +1276,7 @@ theorem subMulMonomial_eq [Ring R] [BEq R] [LawfulBEq R] [DecidableEq R]
     · rw [eq_of_beq hb]
       simp only [coeff_zero]
       simp
-  · rw [if_neg hguard, eq_iff_coeff]
+  · rw [ite_eq_right hguard, eq_iff_coeff]
     intro i
     rw [coeff_ofArray, hcoeff i]
     by_cases hi : i < max a.val.size (d + b.val.size)
@@ -1237,7 +1304,7 @@ lemma erase_correct [Ring R] [BEq R] [LawfulBEq R] [DecidableEq R]
   rw [coeff_erase, coeff_sub, coeff_monomial]
   by_cases hi : i = n
   · subst hi; simp
-  · rw [if_neg hi, if_neg hi]; simp
+  · rw [ite_eq_right hi, ite_eq_right hi]; simp
 
 protected theorem neg_add_cancel [Ring R] [BEq R] [LawfulBEq R]
     (p : CPolynomial R) : -p + p = 0 := by
@@ -1358,6 +1425,57 @@ lemma mul_smul [Semiring R] [BEq R] [LawfulBEq R]
     (r * s) • p = r • (s • p) := by
   rw [eq_iff_coeff]; intro i
   rw [coeff_smul, coeff_smul, coeff_smul, _root_.mul_assoc]
+
+/-- Scalar multiplication by a nonzero element preserves `natDegree`,
+    when `R` has no zero divisors. -/
+lemma smul_natDegree_nz [Semiring R] [NoZeroDivisors R] [BEq R] [LawfulBEq R]
+    {r : R} {p : CPolynomial R} : r ≠ 0 → p.natDegree = (r • p).natDegree := by
+  intros h
+  have hsupp : (r • p).support = p.support := by
+    ext i
+    rw [mem_support_iff, mem_support_iff, coeff_smul, mul_ne_zero_iff]
+    simp [h]
+  rw [natDegree_eq_support_sup, natDegree_eq_support_sup, hsupp]
+
+/-- Scalar multiplication by a nonzero element does not increase `natDegree`. -/
+lemma smul_natDegree [Semiring R] [BEq R] [LawfulBEq R]
+    {r : R} {p : CPolynomial R} : r ≠ 0 → (r • p).natDegree ≤ p.natDegree := by
+  intro _
+  rw [natDegree_eq_support_sup, natDegree_eq_support_sup]
+  apply Finset.sup_mono
+  intro i hi
+  rw [mem_support_iff, coeff_smul] at hi
+  rw [mem_support_iff]
+  exact fun h0 => hi (by rw [h0, Semiring.mul_zero])
+
+/-- Scalar multiplication by a nonzero element preserves `degree`,
+    when `R` has no zero divisors. -/
+lemma smul_degree_nz [Semiring R] [NoZeroDivisors R] [BEq R] [LawfulBEq R]
+    {r : R} {p : CPolynomial R} : r ≠ 0 → p.degree = (r • p).degree := by
+  intro hr
+  by_cases hp : p = 0
+  · subst hp; rw [CPolynomial.smul_zero]
+  · have hrp : r • p ≠ 0 := by
+      intro h
+      apply hp
+      rw [eq_zero_iff_coeff_zero] at h ⊢
+      intro i
+      have hi := h i
+      rw [coeff_smul] at hi
+      exact (mul_eq_zero.mp hi).resolve_left hr
+    rw [degree_eq_natDegree p hp, degree_eq_natDegree (r • p) hrp, smul_natDegree_nz hr]
+
+/-- Scalar multiplication by a nonzero element does not increase `degree`. -/
+lemma smul_degree [Semiring R] [BEq R] [LawfulBEq R]
+    {r : R} {p : CPolynomial R} : r ≠ 0 → (r • p).degree ≤ p.degree := by
+  intro hr
+  by_cases hp : p = 0
+  · subst hp; rw [CPolynomial.smul_zero]
+  · by_cases hrp : r • p = 0
+    · rw [hrp, degree_zero]; exact bot_le
+    · rw [degree_eq_natDegree p hp, degree_eq_natDegree (r • p) hrp]
+      exact WithBot.coe_le_coe.mpr (smul_natDegree hr)
+
 
 /-- `CPolynomial` forms a module when R is a semiring. -/
 instance [Semiring R] [BEq R] [LawfulBEq R] : Module R (CPolynomial R) where
