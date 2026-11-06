@@ -108,6 +108,8 @@ public import CompPoly.Fields.Basic
 public import CompPoly.Fields.Binary.AdditiveNTT.AdditiveNTT
 public import CompPoly.Fields.Binary.AdditiveNTT.Algorithm
 public import CompPoly.Fields.Binary.AdditiveNTT.Correctness
+public import CompPoly.Fields.Binary.AdditiveNTT.Coset
+public import CompPoly.Fields.Binary.AdditiveNTT.CosetBridge
 public import CompPoly.Fields.Binary.AdditiveNTT.Domain
 public import CompPoly.Fields.Binary.AdditiveNTT.Executable
 public import CompPoly.Fields.Binary.AdditiveNTT.Impl
@@ -191,6 +193,7 @@ public import CompPoly.Fields.KoalaBear.Fast
 public import CompPoly.Fields.Mersenne31
 public import CompPoly.Fields.Mersenne31.Basic
 public import CompPoly.Fields.Mersenne31.Bytes
+public import CompPoly.Fields.Mersenne31.Circle
 public import CompPoly.Fields.Mersenne31.Fast
 public import CompPoly.Fields.Montgomery.Basic
 public import CompPoly.Fields.Montgomery.Native32
@@ -209,6 +212,8 @@ public import CompPoly.Fields.Pasta.Basic
 public import CompPoly.Fields.Pasta.Fast
 public import CompPoly.Fields.PrattCertificate
 public import CompPoly.Fields.Secp256k1
+public import CompPoly.Fields.Secp256k1.Basic
+public import CompPoly.Fields.Secp256k1.Fast
 public import CompPoly.LinearAlgebra.Dense
 public import CompPoly.LinearAlgebra.Dense.Basic
 public import CompPoly.LinearAlgebra.Dense.Kernel
@@ -266,6 +271,7 @@ public import CompPoly.Multilinear.ManyEval
 public import CompPoly.Multilinear.ManyEval.Basic
 public import CompPoly.Multilinear.ManyEval.Correctness
 public import CompPoly.Multilinear.TransformEquiv
+public import CompPoly.Multilinear.Unique
 public import CompPoly.Multivariate.Basic
 public import CompPoly.Multivariate.Bytes
 public import CompPoly.Multivariate.CMvMonomial
@@ -285,10 +291,12 @@ public import CompPoly.Multivariate.Unlawful
 public import CompPoly.Multivariate.VarsDegrees
 public import CompPoly.ToMathlib.Finsupp.Fin
 public import CompPoly.ToMathlib.MvPolynomial.Equiv
+public import CompPoly.ToMathlib.MvPolynomial.Nullstellensatz
 public import CompPoly.ToMathlib.Order.WithBot
 public import CompPoly.ToMathlib.Polynomial.BivariateDegree
 public import CompPoly.ToMathlib.Polynomial.BivariateMultiplicity
 public import CompPoly.ToMathlib.Polynomial.BivariateWeightedDegree
+public import CompPoly.ToMathlib.Polynomial.CosetLagrange
 public import CompPoly.ToMathlib.Polynomial.Irreducible
 public import CompPoly.ToMathlib.Polynomial.Roots
 public import CompPoly.Univariate.Barycentric
@@ -348,6 +356,7 @@ public import CompPoly.Univariate.Raw.Division
 public import CompPoly.Univariate.Raw.Modular
 public import CompPoly.Univariate.Raw.Ops
 public import CompPoly.Univariate.Raw.Proofs
+public import CompPoly.Univariate.Raw.Size
 public import CompPoly.Univariate.ReedSolomon
 public import CompPoly.Univariate.ReedSolomon.GaoCorrectness
 public import CompPoly.Univariate.ReedSolomon.GaoDecoder
